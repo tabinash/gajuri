@@ -1,4 +1,3 @@
-import { useDispatch } from "react-redux";
 import { http } from "./http.js";
 
 // Authentication Repository - handles auth-related API calls
@@ -13,7 +12,7 @@ export const authRepository = {
     if (response.data) {
       // FIX: Use JSON.stringify to convert object to string
       localStorage.setItem(
-        "chemiki-authToken",
+        "gajuri-authToken",
         JSON.stringify({
           accessToken: response.data.accessToken,
           refreshToken: response.data.refreshToken,

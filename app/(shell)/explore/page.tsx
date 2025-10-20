@@ -1,159 +1,140 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { exploreRepository } from "@/repositories/exploreRepository";
 import Link from "next/link";
-import { Search, CheckCircle2 } from "lucide-react";
 
-type Org = {
-  id: string;
-  name: string;
+type ApiUser = {
+  id: number;
+  username: string;
   email: string;
-  address: string;
-  avatar?: string;
+  phoneNumber?: string;
+  district?: string;
+  palika?: string;
+  ward?: string;
   verified?: boolean;
+  profilePhotoUrl?: string;
+  coverPhotoUrl?: string;
+  createdAt?: string;
 };
 
-const ORGS: Org[] = [
-  {
-    id: "bharatpur-polic-booth",
-    name: "Bharatpur Polic Booth",
-    email: "police@gmail.com",
-    address: "Bharatpur Metropolitan City, Ward No. 15, Kathmandu",
-    avatar:
-      "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=200&auto=format&fit=crop",
-    verified: true,
-  },
-  {
-    id: "bahumukhi-dudh-sakhari",
-    name: "Bahumukhi Dudh sakhari",
-    email: "dairy@gmail.com",
-    address: "Bharatpur Metropolitan City, Ward No. 15, Kathmandu",
-    avatar:
-      "https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?q=80&w=200&auto=format&fit=crop",
-    verified: true,
-  },
-  {
-    id: "kathmandu-polic-booth",
-    name: "kathmandu Polic Booth",
-    email: "ram@gmail.com",
-    address: "Kathmandu Metropolitan City, Ward No. 15, Kathmandu",
-    avatar:
-      "https://images.unsplash.com/photo-1614020464123-90c8142fdcb7?q=80&w=200&auto=format&fit=crop",
-    verified: true,
-  },
-  {
-    id: "forest-division-chitwan",
-    name: "Forest Division Chitwan",
-    email: "forest@gmail.com",
-    address: "Bharatpur Metropolitan City, Ward No. 15, Chitwan",
-    avatar:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=200&auto=format&fit=crop",
-    verified: true,
-  },
-  {
-    id: "chitwan-medical-hospital",
-    name: "Chitwan Medical Hospital",
-    email: "medical@gmail.com",
-    address: "Bharatpur Metropolitan City, Ward No. 15, Chitwan",
-    avatar:
-      "https://images.unsplash.com/photo-1587370560942-ad2a04eabb6d?q=80&w=200&auto=format&fit=crop",
-    verified: true,
-  },
-];
+function buildLocation(u: Partial<ApiUser>) {
+  const parts = [u.palika, u.district].filter(Boolean).join(", ");
+  return u.ward ? (parts ? `${parts} — Ward ${u.ward}` : `Ward ${u.ward}`) : parts;
+}
 
 export default function ExplorePage() {
   const [q, setQ] = useState("");
-  const items = useMemo(() => {
+  const [items, setItems] = useState<ApiUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await exploreRepository.getExploreData();
+        const rows: ApiUser[] = Array.isArray(res?.data) ? res.data : [];
+        if (!ignore) setItems(rows);
+      } catch (e: any) {
+        if (!ignore) setError(e?.message || "Failed to load data");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    run();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
-    if (!t) return ORGS;
-    return ORGS.filter(
-      (o) =>
-        o.name.toLowerCase().includes(t) ||
-        o.email.toLowerCase().includes(t) ||
-        o.address.toLowerCase().includes(t)
-    );
-  }, [q]);
+    if (!t) return items;
+    return items.filter((u) => {
+      const loc = buildLocation(u) || "";
+      return (
+        u.username?.toLowerCase().includes(t) ||
+        u.email?.toLowerCase().includes(t) ||
+        loc.toLowerCase().includes(t) ||
+        u.district?.toLowerCase().includes(t) ||
+        u.palika?.toLowerCase().includes(t) ||
+        (u.ward && `ward ${u.ward}`.toLowerCase().includes(t))
+      );
+    });
+  }, [q, items]);
 
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Search pill */}
-      <div className="flex items-center rounded-full bg-[#F0F2F5] px-4 py-2">
-        <Search size={16} className="text-slate-500" />
+      {/* Search */}
+      <div className="sticky top-0 z-10 bg-white/80 pb-3 pt-1 backdrop-blur">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search institutions..."
-          className="ml-2 w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
+          placeholder="Search by name, email, or location…"
+          className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600/20"
         />
       </div>
 
-      {/* Divider */}
-      <hr className="my-4 border-slate-200" />
+      {loading && <div className="py-6 text-sm text-slate-600">Loading…</div>}
+      {error && <div className="py-6 text-sm text-red-600">{error}</div>}
 
-      {/* List */}
-      <ul className="space-y-4">
-        {items.map((o) => (
-          <li
-            key={o.id}
-            className="rounded-2xl border border-[#E4E6EB] bg-white p-4 shadow-sm"
-          >
-            <div className="flex items-center gap-4">
-              <Avatar name={o.name} src={o.avatar} />
+      {!loading && !error && filtered.length === 0 && (
+        <div className="py-6 text-sm text-slate-500">No results.</div>
+      )}
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="truncate text-[15px] font-semibold text-slate-700 hover:underline"
+      <ul className="space-y-3">
+        {filtered.map((u) => {
+          const avatar =
+            u.profilePhotoUrl ||
+            "https://via.placeholder.com/80/EEE/94A3B8?text=User";
+          const location = buildLocation(u);
+          return (
+            <li key={u.id} className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src={avatar || "https://via.placeholder.com/80/EEE/94A3B8?text=User"}
+                  alt={`${u.username || "User"}'s avatar`}
+                  className="h-12 w-12 rounded-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://via.placeholder.com/80/EEE/94A3B8?text=User";
+                  }}
+                />
 
-                  >
-                    {o.name}
-                  </span>
-                  {o.verified && (
-                    <CheckCircle2
-                      size={16}
-                      className="shrink-0 text-[#1B74E4]"
-                      aria-label="Verified"
-                    />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-semibold text-slate-900">
+                      {u.username || "Unknown"}
+                    </div>
+                    {u.verified && (
+                      <CheckCircle2
+                        size={16}
+                        className="shrink-0 text-green-600"
+                        aria-label="Verified"
+                      />
+                    )}
+                  </div>
+                  <div className="truncate text-xs text-slate-600">{u.email}</div>
+                  {location && (
+                    <div className="truncate text-xs text-slate-600">{location}</div>
                   )}
                 </div>
 
-                <div className="truncate text-sm text-slate-600">{o.email}</div>
-                <div className="truncate text-sm text-slate-600">{o.address}</div>
+                {/* Visit button */}
+                <Link
+                  href={`/profile/?id=${u.id}`}
+                  className="shrink-0 rounded-full bg-[#1B74E4] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-95"
+                >
+                  Visit
+                </Link>
               </div>
-
-              <Link
-                href={`/explore/${o.id}`}
-                className="shrink-0 rounded-full bg-[#1B74E4] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-95"
-              >
-                Visit
-              </Link>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
-    </div>
-  );
-}
-
-function Avatar({ src, name }: { src?: string; name: string }) {
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={name}
-        className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-slate-200"
-      />
-    );
-  }
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  return (
-    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
-      {initials}
     </div>
   );
 }

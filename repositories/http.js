@@ -1,6 +1,6 @@
 // utils/httpClient.js
 import axios from "axios";
-import { logout } from "../utils/auth";
+import { logout } from "@/utils/auth";
 
 const httpClient = axios.create({
   baseURL: "https://test.gajuri.com/api",
@@ -26,7 +26,7 @@ const processQueue = (error, token = null) => {
 // ===== Request Interceptor =====
 httpClient.interceptors.request.use(
   (config) => {
-    const tokenData = localStorage.getItem("chemiki-authToken");
+    const tokenData = localStorage.getItem("gajuri-authToken");
 
     if (tokenData) {
       try {
@@ -82,7 +82,7 @@ httpClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const tokenData = JSON.parse(localStorage.getItem("chemiki-authToken"));
+        const tokenData = JSON.parse(localStorage.getItem("gajuri-authToken"));
         const refreshToken = tokenData?.refreshToken;
 
         if (!refreshToken) {
@@ -102,7 +102,7 @@ httpClient.interceptors.response.use(
         console.log("🔄 Token refreshed successfully:", res.data);
 
         const newTokens = res.data?.data || res.data; // handle both possible formats
-        localStorage.setItem("chemiki-authToken", JSON.stringify(newTokens));
+        localStorage.setItem("gajuri-authToken", JSON.stringify(newTokens));
 
         const newAccessToken = newTokens.accessToken;
         httpClient.defaults.headers.Authorization = `Bearer ${newAccessToken}`;

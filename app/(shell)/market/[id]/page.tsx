@@ -1,62 +1,137 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Bookmark, MoreHorizontal, Send } from "lucide-react";
+import Link from "next/link";
 
-type Listing = {
+type ApiProduct = {
+  id: number | string;
+  name: string;
+  description?: string;
+  category: string;
+  condition?: string;
+  price: number;
+  available?: boolean;
+  images?: string[];
+  location?: string;
+  createdAt?: string;
+  userId?: number | string;
+  username?: string;
+  ownerContact?: string;
+  profilePicture?: string;
+};
+
+type Detail = {
   id: string;
   title: string;
-  price: string; // "FREE", "$175", etc.
-  images: { src: string; alt?: string }[];
-  seller: {
-    name: string;
-    avatar: string;
-    location: string; // e.g., "Fox Lake"
-    distance: string; // e.g., "6.8 mi"
-  };
   description: string;
-  time: string; // e.g., "12 min ago"
+  price: string;
+  time: string;
+  images: { src: string; alt?: string }[];
+  category?: string;
+  condition?: string;
+  available?: boolean;
+  location?: string;
+  seller: {
+    id?: string;
+    name?: string;
+    avatar?: string;
+    contact?: string;
+  };
   reactions?: number;
   commentsCount?: number;
 };
 
-const MOCK: Record<string, Listing> = {
-  "1": {
-    id: "1",
-    title: "Red Leather Sofa and recliner chair with ottoman",
-    price: "FREE",
-    images: [
-      { src: "https://images.unsplash.com/photo-1616596872535-4b3e29f57a7d?q=80&w=1600&auto=format&fit=crop", alt: "Red leather sofa" },
-      { src: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop", alt: "Matching recliner" },
-    ],
+function relativeTimeFromISO(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+  const units: [label: string, sec: number][] = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["week", 604800],
+    ["day", 86400],
+    ["hour", 3600],
+    ["min", 60],
+  ];
+  for (const [label, sec] of units) {
+    const v = Math.floor(diffSec / sec);
+    if (v >= 1) return `${v} ${label}${v > 1 ? "s" : ""} ago`;
+  }
+  return "just now";
+}
+
+function formatPrice(n?: number) {
+  if (!n || n <= 0) return "FREE";
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: "NPR", maximumFractionDigits: 0 }).format(n);
+  } catch {
+    return `Rs ${n}`;
+  }
+}
+
+function toDetail(p: ApiProduct): Detail {
+  return {
+    id: String(p.id),
+    title: p.name ?? "Untitled",
+    description: p.description || "",
+    price: formatPrice(p.price),
+    time: relativeTimeFromISO(p.createdAt),
+    images: (Array.isArray(p.images) ? p.images : []).map((src, i) => ({
+      src,
+      alt: `image ${i + 1}`,
+    })),
+    category: p.category,
+    condition: p.condition,
+    available: p.available,
+    location: p.location,
     seller: {
-      name: "Jessica Ness",
-      avatar:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=200&auto=format&fit=crop",
-      location: "Fox Lake",
-      distance: "6.8 mi",
+      id: p.userId ? String(p.userId) : undefined,
+      name: p.username,
+      avatar: p.profilePicture || "https://via.placeholder.com/80/EEE/94A3B8?text=User",
+      contact: p.ownerContact,
     },
-    description:
-      "Comfortable red leather sofa in fine condition. Didn’t need them after a move so they’ve been in storage. The pieces need a good cleaning and some light conditioning, but no rips. Pickup only.",
-    time: "12 min ago",
-    reactions: 3,
-    commentsCount: 24,
-  },
-};
+    reactions: 0,
+    commentsCount: 0,
+  };
+}
 
 export default function MarketItemPage({ params }: { params: { id: string } }) {
-  const item = useMemo<Listing>(() => {
-    return MOCK[params.id] ?? MOCK["1"];
+  const router = useRouter();
+  const [item, setItem] = useState<Detail | null>(null);
+
+  useEffect(() => {
+    try {
+      const key = `market:product:${params.id}`;
+      const json = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+      if (json) {
+        const api: ApiProduct = JSON.parse(json);
+        setItem(toDetail(api));
+      } else {
+        const lastId = typeof window !== "undefined" ? localStorage.getItem("market:lastSelectedId") : null;
+        if (lastId) {
+          const alt = localStorage.getItem(`market:product:${lastId}`);
+          if (alt) {
+            const api: ApiProduct = JSON.parse(alt);
+            setItem(toDetail(api));
+          }
+        }
+      }
+    } catch {
+      setItem(null);
+    }
   }, [params.id]);
 
   const [idx, setIdx] = useState(0);
-  const count = item.images.length;
+  const count = item?.images.length ?? 0;
   const hasImages = count > 0;
   const prev = () => setIdx((i) => (i - 1 + count) % count);
   const next = () => setIdx((i) => (i + 1) % count);
 
   const [expanded, setExpanded] = useState(false);
-  const short = item.description.length > 180 && !expanded;
+  const short = (item?.description?.length ?? 0) > 180 && !expanded;
 
   const [msg, setMsg] = useState("Hi, is this still available?");
   const send = (e?: React.FormEvent) => {
@@ -66,16 +141,35 @@ export default function MarketItemPage({ params }: { params: { id: string } }) {
     setMsg("Hi, is this still available?");
   };
 
+  if (!item) {
+    return (
+      <section className="p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+          No product data found. Please open this item from the Market page.
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="grid grid-cols-12 gap-4 p-8 ">
+    <section className="grid grid-cols-12 gap-4 ">
+      {/* Back button */}
+      <div className="col-span-12 mb-4">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-slate-700 hover:text-slate-900"
+        >
+          <ChevronLeft size={20} />
+          <span>Back</span>
+        </button>
+      </div>
+
       {/* Left: media */}
       <div className="col-span-12 lg:col-span-7">
         <div className="relative overflow-hidden rounded-3xl bg-black">
           <div className="flex items-center" style={{ height: 520 }}>
             {!hasImages ? (
-              <div className="grid h-full w-full place-items-center text-white/70">
-                No image
-              </div>
+              <div className="grid h-full w-full place-items-center text-white/70">No image</div>
             ) : (
               <div
                 className="flex h-full w-full transition-transform duration-300 ease-out"
@@ -88,6 +182,9 @@ export default function MarketItemPage({ params }: { params: { id: string } }) {
                       alt={img.alt ?? `image ${i + 1}`}
                       className="max-h-[520px] w-auto object-contain"
                       draggable={false}
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/400x300/EEE/94A3B8?text=Item";
+                      }}
                     />
                   </div>
                 ))}
@@ -122,9 +219,7 @@ export default function MarketItemPage({ params }: { params: { id: string } }) {
         <div className="rounded-3xl border border-slate-200 bg-white">
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
-              <h1 className="text-xl font-semibold text-slate-900 leading-6">
-                {item.title}
-              </h1>
+              <h1 className="text-xl font-semibold text-slate-900 leading-6">{item.title}</h1>
               <div className="flex items-center gap-1">
                 <button aria-label="Save" className="rounded-full p-2 text-slate-600">
                   <Bookmark size={18} />
@@ -137,20 +232,33 @@ export default function MarketItemPage({ params }: { params: { id: string } }) {
 
             <div className="mt-1 text-base font-semibold text-emerald-700">{item.price}</div>
 
+            {/* Chips */}
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              {item.category && <span className="rounded-full bg-slate-100 px-2 py-0.5">{item.category}</span>}
+              {item.condition && <span className="rounded-full bg-slate-100 px-2 py-0.5">{item.condition}</span>}
+              {item.available !== undefined && (
+                <span className={`rounded-full px-2 py-0.5 ${item.available ? "bg-emerald-100 text-emerald-700" : "bg-slate-100"}`}>
+                  {item.available ? "Available" : "Unavailable"}
+                </span>
+              )}
+              {item.location && <span className="rounded-full bg-slate-100 px-2 py-0.5">{item.location}</span>}
+            </div>
+
             {/* Seller */}
             <div className="mt-4 flex items-start gap-3">
               <img
-                src={item.seller.avatar}
-                alt={`${item.seller.name} avatar`}
+                src={item.seller.avatar || "https://via.placeholder.com/80/EEE/94A3B8?text=User"}
+                alt={`${item.seller.name ?? "Seller"} avatar`}
                 className="h-10 w-10 rounded-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "https://via.placeholder.com/80/EEE/94A3B8?text=User";
+                }}
               />
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-900">
-                  {item.seller.name}
-                </div>
-                <div className="text-xs text-slate-600">
-                  {item.seller.location} • {item.seller.distance}
-                </div>
+                <div className="text-sm font-semibold text-slate-900">{item.seller.name}</div>
+                {item.seller.contact && (
+                  <div className="text-xs text-slate-600 break-all">{item.seller.contact}</div>
+                )}
               </div>
             </div>
 
@@ -159,10 +267,7 @@ export default function MarketItemPage({ params }: { params: { id: string } }) {
               {short ? (
                 <>
                   {item.description.slice(0, 180)}…
-                  <button
-                    className="ml-1 text-slate-600 underline"
-                    onClick={() => setExpanded(true)}
-                  >
+                  <button className="ml-1 text-slate-600 underline" onClick={() => setExpanded(true)}>
                     see more
                   </button>
                 </>
@@ -183,27 +288,16 @@ export default function MarketItemPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Message card */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5">
-          <div className="text-sm font-semibold text-slate-900">
-            Send {item.seller.name} a message
-          </div>
-          <form onSubmit={send} className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-300 px-3 py-2">
-            <input
-              value={msg}
-              onChange={(e) => setMsg(e.target.value)}
-              className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              placeholder="Hi, is this still available?"
-            />
-            <button
-              type="submit"
-              aria-label="Send"
-              className="grid h-9 w-9 place-items-center rounded-full bg-slate-900 text-white"
-            >
-              <Send size={18} />
-            </button>
-          </form>
-        </div>
+        <Link
+          href={`/messages?id=${item.seller.id}`}
+          className="inline-block rounded-3xl border border-slate-200 bg-blue-500 px-5 py-3 hover:bg-blue-600 transition-colors"
+        >
+          <span className="text-sm font-semibold text-white">
+            Send Message
+          </span>
+        </Link>
+
       </div>
-    </section>
+    </section >
   );
 }

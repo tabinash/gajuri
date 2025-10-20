@@ -10,7 +10,6 @@ import {
   BriefcaseBusiness,
   MessageSquare,
   Newspaper,
-  Bell,
 } from "lucide-react";
 
 export const SIDEBAR_WIDTH = 264;
@@ -23,7 +22,6 @@ type Item = {
 
 const items: Item[] = [
   { label: "Home", href: "/feed", icon: Home },
-  { label: "News&Notice", href: "/news&notice", icon: Newspaper },
   { label: "Explore", href: "/explore", icon: Compass },
   { label: "For Sale & Free", href: "/market", icon: ShoppingBag },
   { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness },
@@ -34,11 +32,12 @@ export default function LeftSidebar() {
   const pathname = usePathname();
   const fontStack =
     '"Inter", "Segoe UI", SegoeUI, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"';
-
+  
+  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
   const profile = {
-    name: "Abinash",
-    avatar:
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop",
+    id: userData?.id,
+    name: userData?.username,
+    avatar: userData?.profilePhotoUrl,
   };
 
   return (
@@ -99,7 +98,7 @@ export default function LeftSidebar() {
                       href={linkHref}
                       aria-current={active ? "page" : undefined}
                       className={[
-                        "flex items-center gap-3 rounded-md px-3 py-2 text-[18px] transition-colors", // increased from 15px → 16px
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-[18px] transition-colors",
                         active
                           ? "font-semibold text-slate-900"
                           : "text-slate-800 hover:bg-slate-50",
@@ -131,7 +130,10 @@ export default function LeftSidebar() {
           <div className="mb-9">
             <div className="px-6 pb-3">
               <Link
-                href="/profile"
+                href={{
+                  pathname: "/profile",
+                  query: { userId: profile.id },
+                }}
                 className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-slate-50"
               >
                 <img

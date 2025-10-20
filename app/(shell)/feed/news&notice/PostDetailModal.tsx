@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import {
   X,
+  MoreHorizontal,
   Heart,
   MessageCircle,
   ChevronLeft,
@@ -104,7 +105,13 @@ export default function PostDetailModal({ open, onClose, post }: PostDetailModal
         ].join(" ")}
       >
         {/* Close */}
-
+        <button
+          onClick={onClose}
+          className="absolute right-2 top-2 z-10 rounded-full bg-white/90 p-1 text-slate-700"
+          aria-label="Close modal"
+        >
+          <X size={16} />
+        </button>
 
         <div className="flex h-full">
           {/* Left: media (only if images exist) */}
@@ -135,8 +142,9 @@ export default function PostDetailModal({ open, onClose, post }: PostDetailModal
                     {post.images!.map((_, i) => (
                       <span
                         key={i}
-                        className={`h-2 w-2 rounded-full ${i === imageIndex ? "bg-white" : "bg-white/50"
-                          }`}
+                        className={`h-2 w-2 rounded-full ${
+                          i === imageIndex ? "bg-white" : "bg-white/50"
+                        }`}
                       />
                     ))}
                   </div>
@@ -170,14 +178,10 @@ export default function PostDetailModal({ open, onClose, post }: PostDetailModal
                             <span>{post.time}</span>
                           </div>
                         </div>
-                        <button
-                          onClick={onClose}
-
-                          className="rounded-full p-1 text-slate-800 shadowed-sm" aria-label="More options">
-                          <X size={20} />
+                        <button className="rounded-full p-1 text-slate-400" aria-label="More options">
+                          <MoreHorizontal size={18} />
                         </button>
                       </div>
-
                     </div>
                   </div>
 

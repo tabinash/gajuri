@@ -1,32 +1,44 @@
 import { http } from "./http.js";
 
-// -------------------- FETCH BY USER ID (no cache) --------------------
+const CACHE_KEY_PREFIX = "chemiki-userProfile-";
+const CACHE_EXPIRY_MS = 5 * 60 * 1000; // ⏱ 5 minutes cache expiry
+
+// -------------------- FETCH BY USER ID (with cache) --------------------
 export const getUserProfileById = async (userId) => {
   try {
+    const cacheKey = `${CACHE_KEY_PREFIX}${userId}`;
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      const isExpired = Date.now() - timestamp > CACHE_EXPIRY_MS;
+
+      if (!isExpired) {
+        console.log(`⚡ Using cached user profile for ID: ${userId}`);
+        return { data, fromCache: true };
+      } else {
+        console.log(`🕒 Cache expired for ID: ${userId}, refetching...`);
+      }
+    }
+
+    // If no cache or expired → fetch from API
     console.log(`🌐 Fetching user profile from API for ID: ${userId}`);
     const response = await http.get(`/auth/user-details?userId=${userId}`);
     console.log("🚀 Get User Profile By ID Response:", response);
+
+    // Store fresh data in cache
+    localStorage.setItem(
+      cacheKey,
+      JSON.stringify({
+        data: response.data,
+        timestamp: Date.now(),
+      })
+    );
+
     return response;
   } catch (error) {
     console.error(`❌ Error fetching user profile for ID ${userId}:`, error);
     throw error;
-  }
-};
-
-// Retry wrapper for userId
-export const getUserProfileByIdWithRetry = async (userId, maxRetries = 3) => {
-  let lastError;
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await getUserProfileById(userId);
-    } catch (error) {
-      lastError = error;
-      console.warn(
-        `🔄 Retry attempt ${attempt}/${maxRetries} failed for user ID: ${userId}`
-      );
-      if (attempt === maxRetries) throw lastError;
-      await new Promise((r) => setTimeout(r, Math.pow(2, attempt - 1) * 1000));
-    }
   }
 };
 
@@ -38,6 +50,8 @@ export const getUserProfile = async (phoneNumber) => {
       `/auth/user-details?phoneNumber=${phoneNumber}`
     );
     console.log("🚀 Get User Profile Response:", response);
+
+    localStorage.setItem("chemiki-userProfile", JSON.stringify(response.data));
     return response;
   } catch (error) {
     console.error(`❌ Error fetching user profile for ${phoneNumber}:`, error);
@@ -54,10 +68,14 @@ export const updateProfile = async (userId, data) => {
     });
     console.log("🚀 Update User Profile Response:", response);
 
-    // ✅ Refetch fresh user profile after update
+    // ✅ Refetch & update cache after update
     await getUserProfileById(userId);
 
-    localStorage.setItem("chemiki-userProfile", JSON.stringify(response.data));
+    // ✅ Also update the generic cache (if used)
+    localStorage.setItem(
+      `${CACHE_KEY_PREFIX}${userId}`,
+      JSON.stringify({ data: response.data, timestamp: Date.now() })
+    );
 
     return response;
   } catch (error) {
