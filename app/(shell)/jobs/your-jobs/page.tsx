@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Search } from "lucide-react";
-import { getAllJobs } from "@/repositories/JobRepository";
+import {  getJobByUserId } from "@/repositories/JobRepository";
 
 type ApiJob = {
   id: number | string;
@@ -31,18 +30,8 @@ type Job = {
   salary?: string;
   posted: string;
   tags?: string[];
-  mine?: boolean;
-  originalData: ApiJob; // Keep reference to original API data
+  originalData: ApiJob;
 };
-
-const TYPES = [
-  "All types",
-  "Full-time",
-  "Part-time",
-  "Contract",
-  "Internship",
-  "Remote",
-] as const;
 
 function relativeTimeFromISO(iso?: string) {
   if (!iso) return "";
@@ -98,7 +87,7 @@ function mapApiToJob(j: ApiJob): Job {
     salary: formatSalary(j.salary),
     posted: relativeTimeFromISO(j.createdAt),
     tags: j.category ? [j.category] : [],
-    originalData: j, // Store original API data
+    originalData: j,
   };
 }
 
@@ -130,11 +119,10 @@ function Logo({ src, name }: { src?: string; name: string }) {
 }
 
 function JobCard({ job }: { job: Job }) {
-  const { id, title, company, logo, location, type, salary, posted, tags, originalData } = job;
+  const { id, title, company, logo, location, type, salary, tags, originalData } = job;
 
   const handleSelect = () => {
     try {
-      // Store original API data in localStorage
       localStorage.setItem("selectedJob-abinash", JSON.stringify(originalData));
     } catch (err) {
       console.error("Failed to save job to localStorage:", err);
@@ -156,7 +144,7 @@ function JobCard({ job }: { job: Job }) {
             </div>
             <div className="truncate text-sm text-slate-600">{company}</div>
             <div className="mt-1 text-[12px] text-slate-500">
-              {posted} • {location}
+              {location}
             </div>
           </div>
           <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700">
@@ -185,8 +173,6 @@ function JobCard({ job }: { job: Job }) {
 }
 
 export default function JobsPage() {
-  const [type, setType] = useState<(typeof TYPES)[number]>("All types");
-  const [q, setQ] = useState("");
   const [items, setItems] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +183,7 @@ export default function JobsPage() {
       try {
         setLoading(true);
         setError(null);
-        const res = await getAllJobs();
+        const res = await getJobByUserId(1);
         const rows: ApiJob[] = Array.isArray((res as any)?.data)
           ? (res as any).data
           : Array.isArray(res)
@@ -217,71 +203,16 @@ export default function JobsPage() {
     };
   }, []);
 
-  const filtered = useMemo(() => {
-    let arr = items;
-    if (type !== "All types") {
-      arr = arr.filter((j) => j.type === type);
-    }
-    const t = q.trim().toLowerCase();
-    if (t) {
-      arr = arr.filter(
-        (j) =>
-          j.title.toLowerCase().includes(t) ||
-          j.company.toLowerCase().includes(t) ||
-          j.location.toLowerCase().includes(t)
-      );
-    }
-    return arr;
-  }, [items, type, q]);
-
   return (
     <section className="space-y-4">
-      {/* Search + Type Filter */}
-      <div className="border-b border-slate-200 pb-3">
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Search bar */}
-          <div className="flex w-full items-center rounded-full bg-[#F0F2F5] px-3 ring-1 ring-transparent focus-within:ring-[#E4E6EB] sm:max-w-md">
-            <Search size={16} className="text-slate-500" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search title, company, or location"
-              className="ml-2 h-9 w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
-            />
-          </div>
-
-          {/* Type Filter */}
-          <div className="relative w-48">
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-2.5 pr-10 text-sm text-slate-800 shadow-sm focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              aria-label="Job type"
-            >
-              {TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={16}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* States */}
       {loading && <div className="text-sm text-slate-600">Loading…</div>}
       {error && <div className="text-sm text-red-600">{error}</div>}
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && !error && items.length === 0 && (
         <div className="text-sm text-slate-500">No jobs found.</div>
       )}
 
-      {/* Jobs Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((j) => (
+        {items.map((j) => (
           <JobCard key={j.id} job={j} />
         ))}
       </div>

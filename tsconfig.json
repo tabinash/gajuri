@@ -22,6 +22,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/apiwork/page.js", "app/(shell)/feed/page.tsx", "app/(shell)/profile/page.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/apiwork/page.js", "app/(shell)/feed/page.tsx", "app/(shell)/profile/page.jsx", "app/(shell)/jobs/[id]/page.jsx", "app/(shell)/messages/page.jsx", "app/(shell)/messages/ChatThread.jsx", "app/(shell)/messages/ChatList.jsx", "components/LeftSidebar.tsx"],
   "exclude": ["node_modules"]
 }

@@ -114,9 +114,9 @@ function MarketCard({ listing }: { listing: Listing }) {
 
   const handleClick = () => {
     try {
-      const key = `market:product:${id}`;
+      const key = `market:product`;
       localStorage.setItem(key, JSON.stringify(listing.raw)); // save full API row
-      localStorage.setItem("market:lastSelectedId", String(id));
+      // localStorage.setItem("market:lastSelectedId", String(id));
     } catch {}
   };
 

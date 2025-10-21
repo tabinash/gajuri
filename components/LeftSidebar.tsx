@@ -9,7 +9,6 @@ import {
   Compass,
   BriefcaseBusiness,
   MessageSquare,
-  Newspaper,
 } from "lucide-react";
 
 export const SIDEBAR_WIDTH = 264;
@@ -34,6 +33,7 @@ export default function LeftSidebar() {
     '"Inter", "Segoe UI", SegoeUI, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"';
   
   const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+  
   const profile = {
     id: userData?.id,
     name: userData?.username,

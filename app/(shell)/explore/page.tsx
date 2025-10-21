@@ -88,21 +88,42 @@ export default function ExplorePage() {
 
       <ul className="space-y-3">
         {filtered.map((u) => {
-          const avatar =
-            u.profilePhotoUrl ||
-            "https://via.placeholder.com/80/EEE/94A3B8?text=User";
           const location = buildLocation(u);
+          const firstLetter = u.username?.charAt(0)?.toUpperCase() || "U";
+
           return (
-            <li key={u.id} className="rounded-xl border border-slate-200 bg-white p-3">
+            <li
+              key={u.id}
+              className="rounded-xl border border-slate-200 bg-white p-3"
+            >
               <div className="flex items-center gap-3">
-                <img
-                  src={avatar || "https://via.placeholder.com/80/EEE/94A3B8?text=User"}
-                  alt={`${u.username || "User"}'s avatar`}
-                  className="h-12 w-12 rounded-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/80/EEE/94A3B8?text=User";
-                  }}
-                />
+                {u.profilePhotoUrl ? (
+                  <img
+                    src={u.profilePhotoUrl}
+                    alt={`${u.username || "User"}'s avatar`}
+                    className="h-12 w-12 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const fallback = e.currentTarget.nextSibling as HTMLElement;
+                      if (fallback) fallback.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+
+                {/* Fallback alphabet circle */}
+                {!u.profilePhotoUrl && (
+                  <div className="h-12 w-12 flex items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+                    {firstLetter}
+                  </div>
+                )}
+
+                {/* If image fails, this hidden div becomes visible */}
+                <div
+                  className="h-12 w-12 hidden items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700"
+                  style={{ display: "none" }}
+                >
+                  {firstLetter}
+                </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
