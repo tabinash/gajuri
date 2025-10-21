@@ -175,7 +175,7 @@ export default function ChatThread({ userId, name, avatar }) {
                     {!isMe && (
                       <div className="self-end">
                         {showAvatar ? (
-                          <Avatar src={m.senderProfilePicture} name={m.senderUsername} size="h-7 w-7" />
+                          <Avatar src={avatar} name={m.senderUsername} size="h-7 w-7" />
                         ) : (
                           <span className="inline-block h-7 w-7" />
                         )}

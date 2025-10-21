@@ -172,18 +172,20 @@ function JobCard({ job }: { job: Job }) {
   );
 }
 
-export default function JobsPage() {
+export default function UserJobs() {
   const [items, setItems] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+  
   useEffect(() => {
     let ignore = false;
     const run = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await getJobByUserId(1);
+        const res = await getJobByUserId(userData?.id);
+        console.log("Fetched jobs:", res.data);
         const rows: ApiJob[] = Array.isArray((res as any)?.data)
           ? (res as any).data
           : Array.isArray(res)

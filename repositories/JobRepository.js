@@ -59,6 +59,18 @@ export const deleteJob = async (jobId) => {
   }
 };
 
+export const getJobById = async (jobId) => {
+  try {
+    console.log("🌐 Fetching job from API with ID:", jobId);
+    const response = await httpClient.get(`/jobs/${jobId}`);
+    console.log("🚀 Get Job By ID Response:", response) ; 
+    return response;
+  } catch (error) {
+    console.error(`❌ Error fetching job with ID ${jobId}:`, error);
+    throw error;
+  }
+}
+
 export const getJobByUserId = async (userId) => {
   try {
     console.log("🌐 Fetching jobs from API for user:", userId);
@@ -73,10 +85,11 @@ export const getJobByUserId = async (userId) => {
 };
 
 export const jobClosed = async (jobId) => {
-  console.log("🚀 Marking job as closed with ID:", jobId);
-
+  
   try {
-    const response = await httpClient.patch(`/jobs/${jobId}/close`);
+    console.log("🚀 Marking job as closed with ID:", jobId);
+
+    const response = await httpClient.put(`/jobs/${jobId}/close`);
     console.log("🚀 Close Job Response:", response);
 
     return response;

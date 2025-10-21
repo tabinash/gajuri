@@ -2,46 +2,23 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark, MoreHorizontal, Send, MapPin, Building2, Briefcase, Phone } from "lucide-react";
+import {
+  Bookmark,
+  MoreHorizontal,
+  Send,
+  MapPin,
+  Building2,
+  Briefcase,
+  Phone,
+} from "lucide-react";
+import { getJobById, jobClosed } from "@/repositories/JobRepository";
 
-type ApiJob = {
-  id: number | string;
-  title: string;
-  description: string;
-  category: string;
-  jobType: string;
-  salary: number;
-  location: string;
-  open: boolean;
-  contactNo: string;
-  createdAt: string;
-  userId: number | string;
-  username: string;
-  profilePicture?: string;
-};
-
-type Job = {
-  id: string;
-  title: string;
-  company: string;
-  logo?: string;
-  location: string;
-  type: string;
-  salary?: string;
-  posted: string;
-  description: string;
-  category?: string;
-  open?: boolean;
-  contactNo?: string;
-  userId?: string | number;
-};
-
-function relativeTimeFromISO(iso?: string) {
+function relativeTimeFromISO(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-  const units: [string, number][] = [
+  const units = [
     ["year", 31536000],
     ["month", 2592000],
     ["week", 604800],
@@ -56,7 +33,7 @@ function relativeTimeFromISO(iso?: string) {
   return "just now";
 }
 
-function formatSalary(n?: number) {
+function formatSalary(n) {
   if (typeof n !== "number" || Number.isNaN(n)) return undefined;
   try {
     return new Intl.NumberFormat(undefined, {
@@ -69,61 +46,70 @@ function formatSalary(n?: number) {
   }
 }
 
-function normalizeType(v?: string) {
-  const t = (v || "").toLowerCase().replace(/[_-]/g, " ");
-  if (t.includes("full")) return "Full-time";
-  if (t.includes("part")) return "Part-time";
-  if (t.includes("intern")) return "Internship";
-  if (t.includes("contract")) return "Contract";
-  if (t.includes("remote")) return "Remote";
-  return v || "Full-time";
-}
 
-function fromApi(j: ApiJob): Job {
+
+function fromApi(j) {
   return {
     id: String(j.id),
     title: j.title || "Untitled role",
     company: j.username || "Unknown",
     logo: j.profilePicture,
     location: j.location || "—",
-    type: normalizeType(j.jobType),
+    type: j.jobType,
     salary: formatSalary(j.salary),
     posted: relativeTimeFromISO(j.createdAt),
     description: j.description || "",
     category: j.category || undefined,
     open: typeof j.open === "boolean" ? j.open : undefined,
     contactNo: j.contactNo || undefined,
+    secondContactNo: j.ownerPhoneNumber || undefined,
     userId: j.userId,
   };
 }
 
-export default function JobDetailPage({ params }: { params: { id: string } }) {
-  const [job, setJob] = useState<Job | null>(null);
+export default function JobDetailPage({ params }) {
+  const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState(null);
+  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+
+  const isOwner = userData && job && String(userData.id) === String(job.userId);
 
   useEffect(() => {
-    setLoading(true);
-    try {
-      const json = localStorage.getItem("selectedJob-abinash");
-      if (json) {
-        const apiJob: ApiJob = JSON.parse(json);
-        // Verify the ID matches
-        if (String(apiJob.id) === params.id) {
-          setJob(fromApi(apiJob));
-        } else {
-          console.warn("Job ID mismatch. Stored job ID does not match URL parameter.");
-          setJob(null);
-        }
-      } else {
+    const fetchJob = async () => {
+      setLoading(true);
+      try {
+        const response = await getJobById(params.id);
+        console.log("Fetched job:", response.data);
+        setJob(fromApi(response.data));
+      } catch (err) {
+        console.error("Failed to load job:", err);
         setJob(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Failed to load job from localStorage:", err);
-      setJob(null);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchJob();
   }, [params.id]);
+
+  const handleCloseJob = async () => {
+    if (!job || updating) return;
+
+    setUpdating(true);
+    setError(null);
+    try {
+      await jobClosed(job.id);
+      const response = await getJobById(params.id);
+      setJob(fromApi(response.data));
+    } catch (err) {
+      console.error("Failed to close job:", err);
+      setError("Failed to update job status. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -161,19 +147,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               <h1 className="text-xl font-semibold leading-6 text-slate-900">
                 {job.title}
               </h1>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                <span className="inline-flex items-center gap-1">
-                  <Building2 size={14} /> {job.company}
-                </span>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1">
-                  <MapPin size={14} /> {job.location}
-                </span>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1">
-                  <Briefcase size={14} /> {job.type}
-                </span>
-              </div>
+
               <div className="mt-1 text-sm text-slate-600">{job.posted}</div>
             </div>
             <div className="flex items-center gap-2">
@@ -188,7 +162,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   {job.open ? "Open" : "Closed"}
                 </span>
               )}
-             
             </div>
           </div>
 
@@ -198,17 +171,16 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             </div>
           )}
 
-          {/* Extra chips from API */}
+          {job.type && (
+            <div className="mt-3 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-medium text-emerald-700">
+              {job.type}
+            </div>
+          )}
+
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
             {job.category && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {job.category}
-              </span>
-            )}
-            {job.contactNo && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-slate-700">
-                <Phone size={12} />
-                {job.contactNo}
               </span>
             )}
           </div>
@@ -235,17 +207,38 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="mt-4 flex gap-2">
-            
-            <Link
-              href={`/messages?userId=${job.userId}`}
-              className="inline-flex flex-1 bg-blue-500 items-center justify-center gap-2 rounded-full   px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600"
-            >
-              <Send size={16} /> Message
-            </Link>
+            {isOwner ? (
+              <div className="flex-1">
+                {job.open ? (
+                  <button
+                    onClick={handleCloseJob}
+                    disabled={updating}
+                    className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white shadow-sm 
+                    bg-rose-500 hover:bg-rose-600 
+                    disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {updating ? "Updating..." : "Close Job"}
+                  </button>
+                ) : (
+                  <div className="w-full text-center text-sm text-gray-500">
+                    This job has been closed.
+                  </div>
+                )}
+
+                {error && (
+                  <div className="mt-2 text-xs text-rose-600">{error}</div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href={`/messages?userId=${job.userId}`}
+                className="inline-flex flex-1 bg-blue-500 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600"
+              >
+                <Send size={16} /> Message
+              </Link>
+            )}
           </div>
         </div>
-
-        
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5">
           <div className="text-sm font-semibold text-slate-900">
@@ -263,8 +256,22 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             {job.contactNo && (
               <div className="flex items-center gap-2">
                 <Phone size={16} className="text-slate-400" />
-                <a href={`tel:${job.contactNo}`} className="text-blue-600 hover:underline">
+                <a
+                  href={`tel:${job.contactNo}`}
+                  className="text-blue-600 hover:underline"
+                >
                   {job.contactNo}
+                </a>
+              </div>
+            )}
+            {job.secondContactNo && (
+              <div className="flex items-center gap-2">
+                <Phone size={16} className="text-slate-400" />
+                <a
+                  href={`tel:${job.secondContactNo}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {job.secondContactNo}
                 </a>
               </div>
             )}
@@ -275,7 +282,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   );
 }
 
-function CompanyLogo({ src, name }: { src?: string; name: string }) {
+function CompanyLogo({ src, name }) {
   if (src) {
     return (
       <img
