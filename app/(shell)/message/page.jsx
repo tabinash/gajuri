@@ -2,23 +2,24 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { conversationRepository } from "@/repositories/conversationRepository";
 import { ThumbsUp, Send, Loader2 } from "lucide-react";
 
-function Avatar({ src, name, size = "h-9 w-9" }) {
+function Avatar({ src, name = "", size = "h-9 w-9" }) {
   const [imgError, setImgError] = useState(false);
 
-  const initials = name
+  const initials = (name || "")
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
-  if (imgError) {
+  if (imgError || !src) {
     return (
       <div className={`grid ${size} shrink-0 place-items-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 shadow-sm`}>
-        {initials}
+        {initials || "U"}
       </div>
     );
   }
@@ -33,14 +34,21 @@ function Avatar({ src, name, size = "h-9 w-9" }) {
   );
 }
 
-export default function ChatThread({ userId, name, avatar }) {
+export default function ChatThread() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("userId"); // conversation partner id
+
   const [value, setValue] = useState("");
   const [pendingKind, setPendingKind] = useState(null); // "text" | "like" | null
   const endRef = useRef(null);
+
   const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
   const myId = userData?.id;
+  const myUsername = userData?.username || "Me";
+  const myAvatar = userData?.profilePicture || userData?.profilePhotoUrl;
 
+  // Fetch messages (independent)
   const {
     data: messages = [],
     isLoading: messagesLoading,
@@ -48,10 +56,8 @@ export default function ChatThread({ userId, name, avatar }) {
     queryKey: ["conversation", userId],
     queryFn: async () => {
       const response = await conversationRepository.getConversationById(Number(userId));
-      console.log(response.data);
-      if (response.success && response.data) {
-        const sorted = [...response.data].sort((a, b) => a.id - b.id);
-        return sorted;
+      if (response?.success && response?.data) {
+        return [...response.data].sort((a, b) => a.id - b.id);
       }
       return [];
     },
@@ -61,10 +67,20 @@ export default function ChatThread({ userId, name, avatar }) {
     refetchInterval: 1000 * 30,
   });
 
+  // Guess other user info from messages (fallbacks if empty)
+  const other = (() => {
+    const first = messages[0];
+    if (!first) return { username: "Conversation", avatar: undefined };
+    const amISender = first.senderId === myId;
+    return amISender
+      ? { username: first.receiverUsername, avatar: first.receiverProfilePicture }
+      : { username: first.senderUsername, avatar: first.senderProfilePicture };
+  })();
+
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData) => {
       const response = await conversationRepository.sendMessage(messageData);
-      if (!response.success) throw new Error(response.message || "Failed to send message");
+      if (!response?.success) throw new Error(response?.message || "Failed to send");
       return response;
     },
     onMutate: async (messageData) => {
@@ -74,8 +90,8 @@ export default function ChatThread({ userId, name, avatar }) {
       const optimistic = {
         id: `temp-${Date.now()}`,
         senderId: myId,
-        senderProfilePicture: userData?.profilePicture,
-        senderUsername: userData?.username || "Me",
+        senderProfilePicture: myAvatar,
+        senderUsername: myUsername,
         content: messageData.content,
         pending: true,
       };
@@ -83,10 +99,7 @@ export default function ChatThread({ userId, name, avatar }) {
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) {
-        queryClient.setQueryData(["conversation", userId], ctx.previous);
-      }
-      alert("Failed to send. Please try again.");
+      if (ctx?.previous) queryClient.setQueryData(["conversation", userId], ctx.previous);
     },
     onSuccess: () => {
       setValue("");
@@ -122,6 +135,15 @@ export default function ChatThread({ userId, name, avatar }) {
 
   const purple = "#7f3dff";
   const gray = "#EFF2F5";
+  const trimmed = value.trim();
+
+  if (!userId) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-2xl border border-[#E4E6EB] bg-white">
+        <p className="text-sm text-slate-600">Select a chat to start messaging.</p>
+      </div>
+    );
+  }
 
   if (messagesLoading) {
     return (
@@ -131,19 +153,17 @@ export default function ChatThread({ userId, name, avatar }) {
     );
   }
 
-  const trimmed = value.trim();
-
   return (
-    <div className="flex h-full flex-col bg-transparent p-2 -ml-2">
+    <div className="flex h-[95vh] flex-col bg-transparent p-2 -ml-2">
       {/* Card container */}
       <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#E4E6EB] bg-white shadow-sm">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#E4E6EB] bg-white/95 px-4 py-2.5 backdrop-blur">
           <div className="flex items-center gap-2">
-            <Avatar src={avatar} name={name} />
+            <Avatar src={other.avatar} name={other.username} />
             <div className="min-w-0">
               <div className="truncate text-[15px] font-semibold text-slate-900">
-                {name}
+                {other.username}
               </div>
             </div>
           </div>
@@ -162,7 +182,7 @@ export default function ChatThread({ userId, name, avatar }) {
               messages.map((m, idx) => {
                 const isMe = myId != null && m.senderId === myId;
                 const prevMsg = idx > 0 ? messages[idx - 1] : null;
-                const showAvatar = !prevMsg || prevMsg.senderId !== m.senderId;
+                const showAvatar = !isMe && (!prevMsg || prevMsg.senderId !== m.senderId);
                 const isPending = Boolean(m.pending);
 
                 return (
@@ -176,7 +196,7 @@ export default function ChatThread({ userId, name, avatar }) {
                     {!isMe && (
                       <div className="self-end">
                         {showAvatar ? (
-                          <Avatar src={avatar} name={m.senderUsername} size="h-7 w-7" />
+                          <Avatar src={m.senderProfilePicture || other.avatar} name={m.senderUsername} size="h-7 w-7" />
                         ) : (
                           <span className="inline-block h-7 w-7" />
                         )}
@@ -185,7 +205,7 @@ export default function ChatThread({ userId, name, avatar }) {
 
                     <div
                       className={[
-                        "max-w-[58%] rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm",
+                        "max-w-[78%] rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm",
                         isMe ? "text-white" : "text-slate-900",
                         isPending ? "opacity-70" : "",
                       ].join(" ")}
@@ -193,8 +213,8 @@ export default function ChatThread({ userId, name, avatar }) {
                         backgroundColor: isMe ? purple : gray,
                         borderTopLeftRadius: isMe ? 16 : 6,
                         borderTopRightRadius: isMe ? 6 : 16,
-                        whiteSpace: "pre-wrap", // preserve whitespace and line breaks
-                        wordBreak: "break-word", // optional: ensures long words break to next line
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
                       }}
                     >
                       <div>{m.content}</div>
@@ -204,7 +224,6 @@ export default function ChatThread({ userId, name, avatar }) {
                         </div>
                       )}
                     </div>
-
                   </div>
                 );
               })
@@ -233,7 +252,6 @@ export default function ChatThread({ userId, name, avatar }) {
               />
             </div>
 
-            {/* Action: Send when typing, else Like */}
             {trimmed ? (
               <button
                 className="grid h-9 w-9 place-items-center rounded-full bg-[#1B74E4] text-white shadow-sm hover:brightness-95 disabled:opacity-60"

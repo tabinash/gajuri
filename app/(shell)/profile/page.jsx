@@ -43,7 +43,7 @@ function normalizeImages(images) {
 // --- Map API post to PostCard props ---
 function mapApiPostToCard(api) {
   return {
-    _id: api?.id ?? crypto.randomUUID?.() ?? Math.random(),
+    id: api?.id ?? crypto.randomUUID?.() ?? Math.random(),
     userId: api?.userId ?? null,
     name: api?.username ?? "Unknown",
     neighborhood: "",
@@ -75,7 +75,7 @@ export default function ProfilePostsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["posts", "user", userId],
+queryKey: ["posts", "user", Number(userId)],
     queryFn: async ({ pageParam = 0 }) => {
       const res = await postRepository.getPostsByUserId(userId, pageParam, 10);
       console.log("Fetched user posts data:", res.data);
@@ -86,6 +86,7 @@ export default function ProfilePostsPage() {
     enabled: !!userId,
   });
 
+  
   // --- Log or handle errors ---
   useEffect(() => {
     if (isError) console.error("Error fetching user posts:", error);
@@ -133,7 +134,8 @@ export default function ProfilePostsPage() {
 
         {cards.map((p) => (
           <PostCard
-            key={p._id}
+            key={p.id}
+            postId={p.id}
             {...p}
             id={p.userId}
             onOpen={() => {
@@ -164,11 +166,18 @@ export default function ProfilePostsPage() {
       </section>
 
       {/* Post Detail Modal */}
-      <PostDetailModal
+      {/* <PostDetailModal
         open={open}
         onClose={() => setOpen(false)}
         post={selected}
-      />
+      /> */}
+      {open && selected && (
+        <PostDetailModal
+          open={open}
+          onClose={() => setOpen(false)}
+          post={selected}
+        />
+      )}
     </>
   );
 }

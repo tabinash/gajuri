@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { MapPin, CalendarDays, Mail, Phone, Globe, CheckCircle2 } from "lucide-react";
+import { MapPin, CalendarDays, Mail, Phone, Globe, CheckCircle2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { getUserProfileById } from "@/repositories/UserRepository";
 
@@ -50,11 +50,13 @@ function buildLocation(u?: ApiUser) {
   return parts || undefined;
 }
 
-export default function ProfileHeader( {userId}:{userId:string}) {
+export default function ProfileHeader({ userId }: { userId: string }) {
   const [profile, setProfile] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+  const isOwnProfile = Number(userData?.id) === Number(userId);
 
   useEffect(() => {
     let ignore = false;
@@ -80,13 +82,37 @@ export default function ProfileHeader( {userId}:{userId:string}) {
   const location = useMemo(() => buildLocation(profile || undefined), [profile]);
   const website = useMemo(() => normalizeWebsite(profile?.website), [profile?.website]);
 
+  // Save profile data to localStorage before navigating to edit page
+  const handleEditProfile = () => {
+    if (profile) {
+      const editData = {
+        id: profile.id,
+        username: profile.username,
+        email: profile.email,
+        phoneNumber: profile.phoneNumber || "",
+        dateOfBirth: profile.dateOfBirth || "",
+        district: profile.district || "",
+        palika: profile.palika || "",
+        ward: profile.ward || "",
+        institutionCategory: profile.institutionCategory || "",
+        institutionalUser: profile.institutionalUser || false,
+        website: profile.website || "",
+        profilePhotoUrl: profile.profilePhotoUrl || "",
+        coverPhotoUrl: profile.coverPhotoUrl || "",
+      };
+      
+      localStorage.setItem("chemiki-editProfileData", JSON.stringify(editData));
+    }
+  };
+
   // Fallback images
   const coverSrc =
     profile?.coverPhotoUrl ||
-    "https://via.placeholder.com/1600x200/EDF2F7/94A3B8?text=Cover";
+    "https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1600&q=80";
+
   const avatarSrc =
     profile?.profilePhotoUrl ||
-    "https://via.placeholder.com/160/EEE/94A3B8?text=Avatar";
+    "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=160&q=80";
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -120,12 +146,24 @@ export default function ProfileHeader( {userId}:{userId:string}) {
 
         {/* Actions */}
         <div className="mt-3 flex justify-end">
-          <Link
-            href="/profile/edit"
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-slate-50"
-          >
-            Edit profile
-          </Link>
+          {isOwnProfile ? (
+            <Link
+              href="/profile/edit"
+              onClick={handleEditProfile}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-slate-50"
+            >
+              Edit profile
+            </Link>
+          ) : (
+            <Link
+              href={`/message?userId=${profile?.id ?? userId}`}
+              className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-95"
+              aria-label="Message user"
+            >
+              <MessageCircle size={16} />
+              Message
+            </Link>
+          )}
         </div>
 
         {/* Info */}

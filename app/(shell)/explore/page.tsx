@@ -146,7 +146,7 @@ export default function ExplorePage() {
 
                 {/* Visit button */}
                 <Link
-                  href={`/profile/?id=${u.id}`}
+                  href={`/profile/?userId=${u.id}`}
                   className="shrink-0 rounded-full bg-[#1B74E4] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-95"
                 >
                   Visit

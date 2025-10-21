@@ -3,15 +3,13 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Bookmark,
-  MoreHorizontal,
   Send,
   MapPin,
   Building2,
-  Briefcase,
   Phone,
 } from "lucide-react";
 import { getJobById, jobClosed } from "@/repositories/JobRepository";
+import { conversationRepository } from "@/repositories/conversationRepository";
 
 function relativeTimeFromISO(iso) {
   if (!iso) return "";
@@ -46,8 +44,6 @@ function formatSalary(n) {
   }
 }
 
-
-
 function fromApi(j) {
   return {
     id: String(j.id),
@@ -72,6 +68,9 @@ export default function JobDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageStatus, setMessageStatus] = useState(null);
   const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
 
   const isOwner = userData && job && String(userData.id) === String(job.userId);
@@ -108,6 +107,40 @@ export default function JobDetailPage({ params }) {
       setError("Failed to update job status. Please try again.");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e?.preventDefault();
+    const trimmed = message.trim();
+    if (!trimmed || !job || sendingMessage) return;
+
+    setSendingMessage(true);
+    setMessageStatus(null);
+    try {
+      // Format message with job information
+      const jobInfo = ` Job: ${job.title}\n Company: ${job.company}\n Location: ${job.location}\n${job.salary ? ` Salary: ${job.salary}\n` : ''}${job.type ? ` Type: ${job.type}\n` : ''}\n`;
+      const fullMessage = trimmed+ "\n\n" +jobInfo ;
+
+      const response = await conversationRepository.sendMessage({
+        receiverId: Number(job.userId),
+        content: fullMessage,
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to send message");
+      }
+
+      setMessage("");
+      setMessageStatus({ type: "success", text: "Message sent successfully!" });
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setMessageStatus(null), 3000);
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      setMessageStatus({ type: "error", text: "Failed to send message. Please try again." });
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -172,7 +205,7 @@ export default function JobDetailPage({ params }) {
           )}
 
           {job.type && (
-            <div className="mt-3 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-medium text-emerald-700">
+            <div className="mt-3 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-medium text-emerald-700 ml-2">
               {job.type}
             </div>
           )}
@@ -206,7 +239,7 @@ export default function JobDetailPage({ params }) {
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4">
             {isOwner ? (
               <div className="flex-1">
                 {job.open ? (
@@ -230,12 +263,38 @@ export default function JobDetailPage({ params }) {
                 )}
               </div>
             ) : (
-              <Link
-                href={`/messages?userId=${job.userId}`}
-                className="inline-flex flex-1 bg-blue-500 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600"
-              >
-                <Send size={16} /> Message
-              </Link>
+              <div>
+                <div className="mb-3 text-sm font-semibold text-slate-900">Apply for this job</div>
+                <form onSubmit={handleSendMessage} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Type your message..."
+                    disabled={sendingMessage}
+                    className="flex-1 rounded-full border border-slate-200 px-4 py-2 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sendingMessage || !message.trim()}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sendingMessage ? (
+                      "Sending..."
+                    ) : (
+                      <>
+                        <Send size={16} /> Send
+                      </>
+                    )}
+                  </button>
+                </form>
+                
+                {messageStatus && (
+                  <div className={`mt-2 text-xs ${messageStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {messageStatus.text}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

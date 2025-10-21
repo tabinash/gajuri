@@ -89,18 +89,11 @@ function mapApiToProduct(p: ApiProduct): ProductItem {
 }
 
 function ProductCard({ product }: { product: ProductItem }) {
-  const handleClick = () => {
-    try {
-      const key = `market:product`;
-      localStorage.setItem(key, JSON.stringify(product.raw));
-      // localStorage.setItem("lastSelectedProductId", product.id);
-    } catch {}
-  };
+ 
 
   return (
     <Link
       href={{ pathname: `/market/${product.id}`, query: { hide: "true" } }}
-      onClick={handleClick}
       className="block rounded-2xl bg-white p-2 shadow-sm transition hover:shadow-md"
     >
       <div className="overflow-hidden rounded-xl">
@@ -137,7 +130,7 @@ export default function ProductListPage() {
   const [error, setError] = useState<string | null>(null);
 
   // TODO: you’ll handle this user ID part
-  const userId = 1;
+  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
 
   useEffect(() => {
     let ignore = false;
@@ -147,7 +140,7 @@ export default function ProductListPage() {
         setLoading(true);
         setError(null);
 
-        const res = await getProductByUserId(userId);
+        const res = await getProductByUserId(userData?.id);
         const rows: ApiProduct[] = Array.isArray(res?.data) ? res.data : [];
         const mapped = rows.map(mapApiToProduct);
 
@@ -163,7 +156,7 @@ export default function ProductListPage() {
     return () => {
       ignore = true;
     };
-  }, [userId]);
+  }, []);
 
   return (
     <section className="space-y-4">

@@ -1,13 +1,19 @@
 import httpClient from "./http";
 
 export const postRepository = {
-  createPost: async (postData) => {
+  postCreatePrimary: async (postData) => {
+    console.log("Creating post with data:", postData);
+    const response = await httpClient.post("/posts", postData);
+    console.log("Create post response:", response);
+    return response;
+  },
+  postCreateSecondary: async (postData) => {
     const response = await httpClient.post("/posts", postData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-    console.log("Create post response:", response.data);
+    console.log("Create secondary post response:", response);
     return response;
   },
 
@@ -43,6 +49,12 @@ export const postRepository = {
     console.log("Delete comment response:", response.data);
     return response;
   },
+  deletePost: async (postId) => {
+    const response = await httpClient.delete(`/posts/${postId}`);
+    console.log("Delete post response:", response.data);
+    return response;
+  },
+  
 
   myPost: async () => {
     const response = await httpClient.get("/posts/my-posts");

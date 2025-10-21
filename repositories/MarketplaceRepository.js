@@ -25,6 +25,13 @@ export async function getProductByUserId(userId) {
 
   return response;
 }
+export async function getProductById(productId) {
+  console.log("🚀 Fetching product by ID:", productId);  
+  const response = await httpClient.get(`/marketplace/products/${productId}`);
+  console.log("🚀 product details:", response);
+  return response;
+} 
+
 
 export async function addProduct(formData) {
   console.log("🚀 Adding product:", formData);
@@ -34,13 +41,10 @@ export async function addProduct(formData) {
   });
   return response;
 }
-
-export async function deleteProduct(productId) {
-  console.log("🚀 Deleting product with ID:", productId);
-
-  const response = await httpClient.delete(
-    `/marketplace/products/${productId}`
-  );
-
+export async function markProductSold(productId) {
+  console.log("🚀 Marking product as unavailable with ID:", productId);
+  
+  const response = await httpClient.put(`/marketplace/products/${productId}/mark-sold`);
+  console.log("🚀 Mark Product Unavailable Response:", response) ; 
   return response;
 }

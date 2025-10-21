@@ -60,7 +60,35 @@ export const getUserProfile = async (phoneNumber) => {
 };
 
 // -------------------- UPDATE PROFILE --------------------
-export const updateProfile = async (userId, data) => {
+// export const updateProfile = async (userId, data) => {
+//   try {
+//     console.log(`🌐 Updating profile for`, userId);
+//     const response = await http.put(`/profile`, data, {
+//       headers: { "Content-Type": "multipart/form-data" },
+//     });
+//     console.log("🚀 Update User Profile Response:", response);
+
+//     // ✅ Refetch & update cache after update
+//     await getUserProfileById(userId);
+
+//     // ✅ Also update the generic cache (if used)
+//     localStorage.setItem(
+//       `${CACHE_KEY_PREFIX}${userId}`,
+//       JSON.stringify({ data: response.data, timestamp: Date.now() })
+//     );
+
+//     return response;
+//   } catch (error) {
+//     console.error(`❌ Error updating user profile:`, error);
+//     throw error;
+//   }
+// };
+
+
+// make exact 3 function same as update profile ,but name as update bio, update cover profile, update profile image.  no caching .do direct implementation
+
+// -------------------- UPDATE BIO --------------------
+export const updateBio = async (userId, data) => {
   try {
     console.log(`🌐 Updating profile for`, userId);
     const response = await http.put(`/profile`, data, {
@@ -82,4 +110,52 @@ export const updateProfile = async (userId, data) => {
     console.error(`❌ Error updating user profile:`, error);
     throw error;
   }
-};
+}
+// -------------------- UPDATE COVER PROFILE --------------------
+export const updateCoverProfile = async (userId, data) => {
+  try {
+    console.log(`🌐 Updating profile for`, userId);
+   const response = await http.put(`/profile`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    console.log("🚀 Update User Profile Response:", response);
+
+    // ✅ Refetch & update cache after update
+    await getUserProfileById(userId);
+
+    // ✅ Also update the generic cache (if used)
+    localStorage.setItem(
+      `${CACHE_KEY_PREFIX}${userId}`,
+      JSON.stringify({ data: response.data, timestamp: Date.now() })
+    );
+
+    return response;
+  } catch (error) {
+    console.error(`❌ Error updating user profile:`, error);
+    throw error;
+  }
+}
+// -------------------- UPDATE PROFILE IMAGE --------------------
+export const updateProfileImage = async (userId, data) => {
+  try {
+    console.log(`🌐 Updating profile for`, userId);
+    const response = await http.put(`/profile`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    console.log("🚀 Update User Profile Response:", response);
+
+    // ✅ Refetch & update cache after update
+    await getUserProfileById(userId);
+
+    // ✅ Also update the generic cache (if used)
+    localStorage.setItem(
+      `${CACHE_KEY_PREFIX}${userId}`,
+      JSON.stringify({ data: response.data, timestamp: Date.now() })
+    );
+
+    return response;
+  } catch (error) {
+    console.error(`❌ Error updating user profile:`, error);
+    throw error;
+  }
+}

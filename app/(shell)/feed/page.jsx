@@ -41,7 +41,7 @@ function normalizeImages(images) {
 // Map API post -> PostCard props
 function mapApiPostToCard(api) {
   return {
-    _id: api?.id ?? crypto.randomUUID?.() ?? Math.random(),
+    id: api?.id ?? crypto.randomUUID?.() ?? Math.random(),
     userId: api?.userId ?? null,
     name: api?.username ?? "Unknown",
     neighborhood: "", // not provided by API
@@ -117,7 +117,8 @@ export default function FeedPage() {
       <section className="space-y-3">
         {cards.map((p) => (
           <PostCard
-            key={p._id}
+            key={p.id}
+            postId={p.id}
             {...p}
             id={p.userId}
             onOpen={() => {
@@ -146,8 +147,16 @@ export default function FeedPage() {
           </div>
         )}
       </section>
+      
 
-      <PostDetailModal open={open} onClose={() => setOpen(false)} post={selected} />
+      {/* <PostDetailModal open={open} onClose={() => setOpen(false)} post={selected} /> */}
+      {open && selected && (
+        <PostDetailModal
+          open={open}
+          onClose={() => setOpen(false)}
+          post={selected}
+        />
+      )}
     </>
   );
 }

@@ -40,14 +40,11 @@ type Listing = {
 const CATEGORIES = [
   "All categories",
   "ELECTRONIC",
+  "VEHICLES",
   "COMPUTER",
   "FURNITURE",
-  "FOOD",
   "FASHION",
-  "SPORTS",
-  "ART",
-  "BOOKS",
-  "HOME & GARDEN",
+  "BEAUTY",
 ] as const;
 
 
