@@ -17,7 +17,7 @@ function Avatar({ src, name, size = "h-9 w-9" }) {
 
   if (imgError) {
     return (
-      <div className={`grid ${size} shrink-0 place-items-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 shadow-sm`}>
+      <div className={`grid ${size} shrink-0 place-items-center rounded-full bg-slate-200 text-base font-semibold text-slate-700 shadow-sm`}>
         {initials}
       </div>
     );
@@ -126,7 +126,7 @@ export default function ChatThread({ userId, name, avatar }) {
   if (messagesLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-white">
-        <p className="text-sm text-slate-600">Loading messages...</p>
+        <p className="text-base text-slate-600">Loading messages...</p>
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function ChatThread({ userId, name, avatar }) {
           <div className="flex items-center gap-2">
             <Avatar src={avatar} name={name} />
             <div className="min-w-0">
-              <div className="truncate text-[15px] font-semibold text-slate-900">
+              <div className="truncate text-base font-semibold text-slate-900">
                 {name}
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function ChatThread({ userId, name, avatar }) {
           <div>
             {messages.length === 0 ? (
               <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-slate-500">
+                <p className="text-base text-slate-500">
                   No messages yet. Start the conversation!
                 </p>
               </div>
@@ -185,12 +185,12 @@ export default function ChatThread({ userId, name, avatar }) {
 
                     <div
                       className={[
-                        "max-w-[58%] rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm",
+                        "max-w-[83%] rounded-2xl px-4 py-2 text-sm leading-relaxed shadow-sm",
                         isMe ? "text-white" : "text-slate-900",
                         isPending ? "opacity-70" : "",
                       ].join(" ")}
                       style={{
-                        backgroundColor: isMe ? purple : gray,
+                        backgroundColor: isMe ? "#1B74E4" : gray,
                         borderTopLeftRadius: isMe ? 16 : 6,
                         borderTopRightRadius: isMe ? 6 : 16,
                         whiteSpace: "pre-wrap", // preserve whitespace and line breaks
@@ -221,15 +221,10 @@ export default function ChatThread({ userId, name, avatar }) {
               <input
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    onSend();
-                  }
-                }}
+                
                 placeholder="Aa"
                 disabled={sendMessageMutation.isPending}
-                className="h-10 w-full bg-transparent text-[15px] outline-none placeholder:text-slate-400 disabled:opacity-50"
+                className="h-10 w-full bg-transparent text-base outline-none placeholder:text-slate-400 disabled:opacity-50"
               />
             </div>
 

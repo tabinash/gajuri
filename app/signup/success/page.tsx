@@ -36,12 +36,7 @@ export default function SuccessPage() {
           >
             Go to Login
           </Link>
-          <Link
-            href="/"
-            className="rounded-full bg-gray-100 px-6 py-3 text-gray-800 text-[15px] font-medium hover:bg-gray-200 text-center"
-          >
-            Explore Home
-          </Link>
+
         </div>
       </div>
     </div>

@@ -1,61 +1,101 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-const DIGITS = 6;
+import axios from "axios";
+import authRepository from "@/repositories/authRepository";
 
 export default function OtpPage() {
   const router = useRouter();
-  const [code, setCode] = useState<string[]>(Array(DIGITS).fill(""));
-  const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState<string>("");
-  const inputs = useRef<Array<HTMLInputElement | null>>([]);
+  const [otp, setotp] = useState("");
+  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [token, setToken] = useState("");
+  const [resending, setResending] = useState(false); // Loading state for resend
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const raw = sessionStorage.getItem("signup:data");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          setEmail(parsed.email ?? "");
-        } catch {}
-      }
+    const data = sessionStorage.getItem("signup:data");
+    const token = JSON.parse(sessionStorage.getItem("token") || "{}");
+    setToken(token);
+    console.log("Saved Token:", token);
+    console.log("Saved Data:", JSON.parse(data || "{}"));
+    
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        setEmail(parsed.email || "");
+      } catch {}
     }
   }, []);
 
-  const value = useMemo(() => code.join(""), [code]);
-  const canVerify = value.length === DIGITS;
-
-  function onChange(index: number, v: string) {
-    if (!/^[0-9]?$/.test(v)) return;
-    const arr = [...code];
-    arr[index] = v;
-    setCode(arr);
-    if (v && inputs.current[index + 1]) inputs.current[index + 1]?.focus();
-  }
-
-  function onKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Backspace" && !code[index] && inputs.current[index - 1]) {
-      e.preventDefault();
-      const arr = [...code];
-      arr[index - 1] = "";
-      setCode(arr);
-      inputs.current[index - 1]?.focus();
+  const handleChange = (value: string) => {
+    if (/^\d*$/.test(value)) {
+      setotp(value);
     }
-  }
+  };
 
-  async function verify(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    // Mock verification: accept 000000 or any 6 digits
-    await new Promise((r) => setTimeout(r, 600));
-    if (!canVerify) {
-      setError("Enter the 6-digit code.");
+    setError("");
+    
+    if (otp.length !== 4) {
+      setError("Please enter the complete 4-digit otp.");
       return;
     }
-    router.push("/signup/success");
-  }
+    
+    try {
+      const response = await authRepository.otpVerification({
+        email,
+        otp,
+        token,
+      });
+      console.log("OTP Verification Response:", response);
+      router.push("/signup/success");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || "Verification failed");
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    setotp("");
+    setError("");
+
+    try {
+      // Get the stored signup data from session
+      const savedData = sessionStorage.getItem("signup:data");
+      
+      if (!savedData) {
+        setError("Session expired. Please sign up again.");
+        router.replace("/signup");
+        return;
+      }
+
+      const requestData = JSON.parse(savedData);
+      console.log("Resending OTP with data:", requestData);
+
+      // Call the same register API to resend OTP
+      const res = await axios.post("https://test.gajuri.com/api/auth/register", requestData);
+      
+      console.log("Resend OTP Response:", res.data);
+      
+      // Update token if new one is provided
+      if (res?.data?.token) {
+        sessionStorage.setItem("token", JSON.stringify(res.data.token));
+        setToken(res.data.token);
+      }
+
+      // Show success message (optional)
+      setError(""); // Clear any errors
+      alert("OTP has been resent to your email!"); // You can replace with a toast notification
+      
+    } catch (err: any) {
+      console.error("❌ Resend OTP failed:", err);
+      setError(err?.response?.data?.message || err?.message || "Failed to resend OTP. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -64,26 +104,20 @@ export default function OtpPage() {
           Verify your email
         </h1>
         <p className="mt-2 text-center text-sm text-gray-600">
-          We sent a 6-digit code to {email || "your email"}.
+          We sent a 4-digit otp to {email || "your email"}.
         </p>
 
-        <form onSubmit={verify} className="mt-6 space-y-5">
-          <div className="flex items-center justify-center gap-2 sm:gap-3">
-            {Array.from({ length: DIGITS }).map((_, i) => (
-              <input
-                key={i}
-                ref={(el) => {
-                  inputs.current[i] = el;
-                }}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={1}
-                value={code[i]}
-                onChange={(e) => onChange(i, e.target.value)}
-                onKeyDown={(e) => onKeyDown(i, e)}
-                className="h-12 w-10 rounded-lg border border-gray-300 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-green-600/20 sm:h-14 sm:w-12"
-              />
-            ))}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+          <div>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={otp}
+              onChange={(e) => handleChange(e.target.value)}
+              placeholder="Enter 4-digit otp"
+              className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-center text-2xl tracking-widest text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B74E4]/40"
+            />
           </div>
 
           {error && (
@@ -94,8 +128,7 @@ export default function OtpPage() {
 
           <button
             type="submit"
-            disabled={!canVerify}
-            className="mx-auto block w-full rounded-full bg-green-600 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-[#1B74E4] px-6 py-3 text-[15px] font-medium text-white transition hover:bg-[#1B74E9]"
           >
             Verify
           </button>
@@ -103,13 +136,11 @@ export default function OtpPage() {
 
         <button
           type="button"
-          className="mt-4 w-full text-sm text-gray-700 underline"
-          onClick={() => {
-            setCode(Array(DIGITS).fill(""));
-            inputs.current[0]?.focus();
-          }}
+          onClick={handleResend}
+          disabled={resending}
+          className="mt-4 w-full text-sm text-gray-700 underline hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Resend code
+          {resending ? "Resending..." : "Resend otp"}
         </button>
       </div>
     </div>

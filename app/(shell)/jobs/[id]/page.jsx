@@ -7,9 +7,11 @@ import {
   MapPin,
   Building2,
   Phone,
+  ChevronLeft,
 } from "lucide-react";
 import { getJobById, jobClosed } from "@/repositories/JobRepository";
 import { conversationRepository } from "@/repositories/conversationRepository";
+import { useRouter } from "next/navigation";
 
 function relativeTimeFromISO(iso) {
   if (!iso) return "";
@@ -65,6 +67,7 @@ function fromApi(j) {
 
 export default function JobDetailPage({ params }) {
   const [job, setJob] = useState(null);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
@@ -147,7 +150,7 @@ export default function JobDetailPage({ params }) {
   if (loading) {
     return (
       <section className="p-8">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-base text-slate-600">
           Loading job details...
         </div>
       </section>
@@ -158,7 +161,7 @@ export default function JobDetailPage({ params }) {
     return (
       <section className="p-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <div className="text-sm text-slate-600">
+          <div className="text-base text-slate-600">
             No job found. Please select a job from the{" "}
             <Link href="/jobs" className="text-blue-600 hover:underline">
               Jobs page
@@ -172,6 +175,12 @@ export default function JobDetailPage({ params }) {
 
   return (
     <section className="grid grid-cols-12 gap-4 p-8">
+       <div className="col-span-12 mb-4">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-700 hover:text-slate-900">
+            <ChevronLeft size={20} />
+            <span>Back</span>
+          </button>
+        </div>
       {/* Left: details */}
       <div className="col-span-12 space-y-4 lg:col-span-7">
         <div className="rounded-3xl border border-slate-200 bg-white p-5">
@@ -181,14 +190,14 @@ export default function JobDetailPage({ params }) {
                 {job.title}
               </h1>
 
-              <div className="mt-1 text-sm text-slate-600">{job.posted}</div>
+              <div className="mt-1 text-sm text-slate-500">{job.posted}</div>
             </div>
             <div className="flex items-center gap-2">
               {job.open !== undefined && (
                 <span
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${
+                  className={`rounded-full px-2 py-1 text-sm font-medium ${
                     job.open
-                      ? "bg-emerald-50 text-emerald-700"
+                      ? "bg-emerald-50 text-[#1B74E4]"
                       : "bg-rose-50 text-rose-700"
                   }`}
                 >
@@ -199,18 +208,18 @@ export default function JobDetailPage({ params }) {
           </div>
 
           {job.salary && (
-            <div className="mt-3 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-medium text-emerald-700">
+            <div className="mt-3 inline-flex rounded-full  px-2.5 py-1 text-base font-medium text-gray-600">
               {job.salary}
             </div>
           )}
 
           {job.type && (
-            <div className="mt-3 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-medium text-emerald-700 ml-2">
+            <div className="mt-3 inline-flex rounded-full  px-2.5 py-1 text-base font-medium text-gray-700 ml-2">
               {job.type}
             </div>
           )}
 
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <div className="mt-2 flex flex-wrap gap-2 text-sm">
             {job.category && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
                 {job.category}
@@ -218,7 +227,7 @@ export default function JobDetailPage({ params }) {
             )}
           </div>
 
-          <div className="mt-4 whitespace-pre-line text-[15px] leading-6 text-slate-800">
+          <div className="mt-4 whitespace-pre-line text-base leading-normal text-slate-800">
             {job.description}
           </div>
         </div>
@@ -230,10 +239,10 @@ export default function JobDetailPage({ params }) {
           <div className="flex items-center gap-3">
             <CompanyLogo src={job.logo} name={job.company} />
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-slate-900">
+              <div className="truncate text-base font-semibold text-slate-900">
                 {job.company}
               </div>
-              <div className="truncate text-xs text-slate-600">
+              <div className="truncate text-sm text-slate-500">
                 {job.location}
               </div>
             </div>
@@ -246,25 +255,25 @@ export default function JobDetailPage({ params }) {
                   <button
                     onClick={handleCloseJob}
                     disabled={updating}
-                    className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white shadow-sm 
+                    className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-medium text-white shadow-sm 
                     bg-rose-500 hover:bg-rose-600 
                     disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {updating ? "Updating..." : "Close Job"}
                   </button>
                 ) : (
-                  <div className="w-full text-center text-sm text-gray-500">
+                  <div className="w-full text-center text-base text-gray-500">
                     This job has been closed.
                   </div>
                 )}
 
                 {error && (
-                  <div className="mt-2 text-xs text-rose-600">{error}</div>
+                  <div className="mt-2 text-sm text-rose-600">{error}</div>
                 )}
               </div>
             ) : (
               <div>
-                <div className="mb-3 text-sm font-semibold text-slate-900">Apply for this job</div>
+                <div className="mb-3 text-base font-semibold text-slate-900">Apply for this job</div>
                 <form onSubmit={handleSendMessage} className="flex gap-2">
                   <input
                     type="text"
@@ -272,12 +281,12 @@ export default function JobDetailPage({ params }) {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
                     disabled={sendingMessage}
-                    className="flex-1 rounded-full border border-slate-200 px-4 py-2 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 rounded-full border border-slate-200 px-3 py-2 text-base outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     type="submit"
                     disabled={sendingMessage || !message.trim()}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-3 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {sendingMessage ? (
                       "Sending..."
@@ -290,7 +299,7 @@ export default function JobDetailPage({ params }) {
                 </form>
                 
                 {messageStatus && (
-                  <div className={`mt-2 text-xs ${messageStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <div className={`mt-2 text-sm ${messageStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {messageStatus.text}
                   </div>
                 )}
@@ -300,10 +309,10 @@ export default function JobDetailPage({ params }) {
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-5">
-          <div className="text-sm font-semibold text-slate-900">
+          <div className="text-base font-semibold text-slate-900">
             About the employer
           </div>
-          <div className="mt-3 space-y-2 text-sm text-slate-600">
+          <div className="mt-3 space-y-2 text-base text-slate-700">
             <div className="flex items-center gap-2">
               <Building2 size={16} className="text-slate-400" />
               <span>{job.company}</span>
@@ -362,7 +371,7 @@ function CompanyLogo({ src, name }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-200 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
+    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-200 text-base font-semibold text-slate-700 ring-1 ring-slate-200">
       {initials}
     </div>
   );

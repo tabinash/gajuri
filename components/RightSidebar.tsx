@@ -28,10 +28,9 @@ export default function RightSidebar() {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="  ">
       <aside
         ref={sidebarRef}
-        style={{ position: "absolute", top: top, width: "100%" }}
         className="space-y-4"
       >
         {/* Alerts */}

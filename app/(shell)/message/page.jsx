@@ -4,7 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { conversationRepository } from "@/repositories/conversationRepository";
-import { ThumbsUp, Send, Loader2 } from "lucide-react";
+import { ThumbsUp, Send, Loader2, ChevronLeft } from "lucide-react";
+import { BiLeftArrowAlt } from "react-icons/bi";
+import { useRouter } from "next/navigation";
 
 function Avatar({ src, name = "", size = "h-9 w-9" }) {
   const [imgError, setImgError] = useState(false);
@@ -35,6 +37,8 @@ function Avatar({ src, name = "", size = "h-9 w-9" }) {
 }
 
 export default function ChatThread() {
+    const router = useRouter();
+  
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId"); // conversation partner id
@@ -160,6 +164,9 @@ export default function ChatThread() {
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#E4E6EB] bg-white/95 px-4 py-2.5 backdrop-blur">
           <div className="flex items-center gap-2">
+           <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-700 hover:text-slate-900">
+            <BiLeftArrowAlt size={20} />
+          </button>
             <Avatar src={other.avatar} name={other.username} />
             <div className="min-w-0">
               <div className="truncate text-[15px] font-semibold text-slate-900">

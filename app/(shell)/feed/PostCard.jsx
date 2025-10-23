@@ -3,9 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Globe2,
-  MoreHorizontal,
   Eye,
-  Trash,
   MessageCircle,
   ChevronLeft,
   ChevronRight,
@@ -17,27 +15,9 @@ import { usePathname } from "next/navigation";
 import postRepository from "@/repositories/PostRepository";
 import { useQueryClient } from "@tanstack/react-query";
 
-
-export type Post = {
-  id: string;
-  postId?: string;
-  name: string;
-  neighborhood: string;
-  time: string;
-  text: string;
-  likes: number;
-  comments: number;
-  avatar: string;
-  images?: { src: string; alt?: string }[];
-};
-
-type Handlers = {
-  onOpen?: () => void;
-  onComment?: () => void;
-};
-
 export default function PostCard({
   id,
+  postType,
   postId,
   name,
   neighborhood,
@@ -49,23 +29,23 @@ export default function PostCard({
   images = [],
   onOpen,
   onComment,
-}: Post & Handlers) {
+}) {
   const [index, setIndex] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
   const count = images.length;
   const pathname = usePathname();
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef(null);
+  const queryClient = useQueryClient();
+  console.log("PostCard render:", { id, postType, name });
 
   const prev = () => setIndex((i) => (i - 1 + count) % count);
   const next = () => setIndex((i) => (i + 1) % count);
   const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
   const userId = userData?.id;
-const queryClient = useQueryClient();
 
-  // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
         setShowMenu(false);
       }
     };
@@ -74,15 +54,12 @@ const queryClient = useQueryClient();
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleDelete =async () => {
-    const response = await postRepository.deletePost(postId);
-        queryClient.invalidateQueries({ queryKey: ["posts", "general"] });
-        queryClient.invalidateQueries({ queryKey: ["posts", "user", id] });
-
-
+  const handleDelete = async () => {
+    await postRepository.deletePost(postId);
+    queryClient.invalidateQueries({ queryKey: ["posts", "general"] });
+    queryClient.invalidateQueries({ queryKey: ["posts", "user", id] });
     console.log("Delete post with ID:", postId);
     setShowMenu(false);
-    // TODO: Implement actual delete functionality
   };
 
   return (
@@ -105,10 +82,10 @@ const queryClient = useQueryClient();
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-slate-900">
+                  <div className="truncate text-base font-semibold text-slate-900">
                     {name}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-500">
                     <span className="truncate">{neighborhood}</span>
                     <span>•</span>
                     <span>{time}</span>
@@ -119,6 +96,24 @@ const queryClient = useQueryClient();
               </div>
             </div>
           </Link>
+
+          {postType !== "GENERAL" && (
+  <span
+    className={[
+      "ml-2 rounded-full px-2.5 py-0.5 text-sm font-medium",
+      postType === "LOST AND FOUND"
+        ? "bg-amber-50 text-amber-700 border border-amber-200"
+        : postType === "ALERT"
+        ? "bg-red-50 text-red-700 border border-red-200"
+        : postType === "NOTICE"
+        ? "bg-blue-50 text-blue-700 border border-blue-200"
+        : "",
+    ].join(" ")}
+  >
+    {postType.replaceAll("_", " ")}
+  </span>
+)}
+
 
           {userId === id && (
             <div className="relative" ref={menuRef}>
@@ -131,12 +126,11 @@ const queryClient = useQueryClient();
                 <MoreHorizontalIcon size={18} />
               </button>
 
-              {/* Dropdown Menu */}
               {showMenu && (
                 <div className="absolute right-0 top-8 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-10 py-1">
                   <button
                     onClick={handleDelete}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-base text-red-600 hover:bg-red-50 flex items-center gap-2"
                   >
                     <Trash2 size={16} />
                     Delete Post
@@ -148,7 +142,7 @@ const queryClient = useQueryClient();
         </header>
 
         {/* Body */}
-        <p className="mt-3 whitespace-pre-wrap text-[15px] leading-6 text-slate-800">
+        <p className="mt-3 whitespace-pre-wrap text-base leading-normal  text-slate-800">
           {text.length > 200 ? `${text.slice(0, 200)}...` : text}{" "}
           {text.length > 200 && (
             <span className="text-blue-600 cursor-pointer" onClick={onOpen}>
@@ -157,7 +151,7 @@ const queryClient = useQueryClient();
           )}
         </p>
 
-        {/* Carousel (one image at a time) */}
+        {/* Carousel */}
         {count > 0 && (
           <div className="relative mt-3 overflow-hidden rounded-xl cursor-pointer">
             <div
@@ -194,7 +188,6 @@ const queryClient = useQueryClient();
                   <ChevronRight size={18} />
                 </button>
 
-                {/* Dots */}
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center gap-1.5">
                   {images.map((_, i) => (
                     <span
@@ -215,7 +208,7 @@ const queryClient = useQueryClient();
         <div className="mt-4 flex items-center gap-3">
           <button
             type="button"
-            className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+            className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-base text-slate-700 hover:bg-slate-50"
             aria-label="Like"
           >
             <Eye size={18} className="text-slate-500 group-hover:text-emerald-600" />
@@ -224,7 +217,7 @@ const queryClient = useQueryClient();
 
           <button
             type="button"
-            className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+            className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-base text-slate-700 hover:bg-slate-50"
             aria-label="Comment"
             onClick={onComment ?? onOpen}
           >

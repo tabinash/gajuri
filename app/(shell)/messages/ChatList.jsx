@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Search, SquarePen } from "lucide-react";
+import { Search } from "lucide-react";
 
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -28,7 +28,7 @@ function Avatar({ src, name }) {
 
   if (!src || imgError) {
     return (
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 shadow-sm">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-200 text-base font-semibold text-slate-700 shadow-sm">
         {initials}
       </div>
     );
@@ -71,12 +71,7 @@ export default function ChatList({
         <div className="sticky top-0 z-10 space-y-3 border-b border-[#E4E6EB] bg-white/95 p-4 backdrop-blur">
           <div className="flex items-center justify-between">
             <h2 className="text-[22px] font-semibold text-slate-900">Chats</h2>
-            <button
-              aria-label="New chat"
-              className="grid h-9 w-9 place-items-center rounded-full border border-[#E4E6EB] text-slate-700 shadow-sm hover:bg-slate-50"
-            >
-              <SquarePen size={18} />
-            </button>
+            
           </div>
 
           <div className="flex items-center rounded-full bg-[#F0F2F5] px-3 ring-1 ring-transparent focus-within:ring-[#E4E6EB]">
@@ -84,8 +79,8 @@ export default function ChatList({
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search Messenger"
-              className="ml-2 h-9 w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
+              placeholder="Search friends, messages..."
+              className="ml-2 h-9 w-full bg-transparent text-base outline-none placeholder:text-slate-500"
             />
           </div>
         </div>
@@ -94,11 +89,11 @@ export default function ChatList({
         <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-slate-50 p-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-slate-600">Loading...</p>
+              <p className="text-base text-slate-600">Loading...</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-slate-500">
+              <p className="text-base text-slate-500">
                 {q ? "No conversations found" : "No conversations yet"}
               </p>
             </div>
@@ -119,10 +114,10 @@ export default function ChatList({
                       <Avatar name={c.otherUsername} src={c.profilePicture} />
 
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[15px] font-medium text-slate-900">
+                        <div className="truncate text-base font-medium text-slate-900">
                           {c.otherUsername}
                         </div>
-                        <div className="mt-0.5 flex items-center gap-1 truncate text-[13px] text-slate-600">
+                        <div className="mt-0.5 flex items-center gap-1 truncate text-sm text-slate-500">
                           <span className="truncate">{c.lastMessage}</span>
                           <span className="shrink-0">· {formatTimestamp(c.lastMessageTime)}</span>
                         </div>

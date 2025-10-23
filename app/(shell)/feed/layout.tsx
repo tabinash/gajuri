@@ -3,11 +3,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Image, Video, Smile, Send, X, ChevronDown, Link2, Loader2, CheckCircle } from "lucide-react";
+import { Image, Video, Smile, Send, X, ChevronDown, Link2, Loader2, CheckCircle, Globe } from "lucide-react";
 import postRepository from "@/repositories/PostRepository";
 import { useQueryClient } from "@tanstack/react-query";
-
-
 
 export default function FeedLayout({
   children,
@@ -35,21 +33,19 @@ export default function FeedLayout({
   const username = userData?.username || "User";
   const firstName = username.split(" ")[0];
 
-  userData?.institutionalUser
-const POST_TYPES = userData?.institutionalUser
-  ? [
-      { value: "GENERAL", label: "GENERAL", color: "text-slate-700" },
-      { value: "NEWS", label: "NEWS", color: "text-blue-700" },
-      { value: "NOTICE", label: "NOTICE", color: "text-amber-700" },
-      { value: "ALERT", label: "ALERT", color: "text-red-700" },
-      { value: "LOST_AND_FOUND", label: "LOST & FOUND", color: "text-purple-700" },
-    ]
-  : [
-      { value: "GENERAL", label: "GENERAL", color: "text-slate-700" },
-      { value: "ALERT", label: "ALERT", color: "text-red-700" },
-      { value: "LOST_AND_FOUND", label: "LOST & FOUND", color: "text-purple-700" },
-    ];
-
+  const POST_TYPES = userData?.institutionalUser
+    ? [
+        { value: "GENERAL", label: "General", icon: Globe, color: "text-slate-600", bgColor: "bg-slate-50", hoverColor: "hover:bg-slate-100" },
+        { value: "NEWS", label: "News", icon: Globe, color: "text-blue-600", bgColor: "bg-blue-50", hoverColor: "hover:bg-blue-100" },
+        { value: "NOTICE", label: "Notice", icon: Globe, color: "text-amber-600", bgColor: "bg-amber-50", hoverColor: "hover:bg-amber-100" },
+        { value: "ALERT", label: "Alert", icon: Globe, color: "text-red-600", bgColor: "bg-red-50", hoverColor: "hover:bg-red-100" },
+        { value: "LOST_AND_FOUND", label: "Lost & Found", icon: Globe, color: "text-purple-600", bgColor: "bg-purple-50", hoverColor: "hover:bg-purple-100" },
+      ]
+    : [
+        { value: "GENERAL", label: "General", icon: Globe, color: "text-slate-600", bgColor: "bg-slate-50", hoverColor: "hover:bg-slate-100" },
+        { value: "ALERT", label: "Alert", icon: Globe, color: "text-red-600", bgColor: "bg-red-50", hoverColor: "hover:bg-red-100" },
+        { value: "LOST_AND_FOUND", label: "Lost & Found", icon: Globe, color: "text-purple-600", bgColor: "bg-purple-50", hoverColor: "hover:bg-purple-100" },
+      ];
 
   const selectedType = POST_TYPES.find((t) => t.value === postType) || POST_TYPES[0];
 
@@ -190,212 +186,252 @@ const POST_TYPES = userData?.institutionalUser
 
   return (
     <div className="space-y-4">
-      {/* Post Creation Header */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+      {/* Post Creation Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <div className="p-4">
-          <div className="flex items-start gap-3">
-            {/* User Avatar */}
-            <img
-              src={userAvatar || "https://via.placeholder.com/40"}
-              alt={username}
-              className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-100"
-              onError={(e) => {
-                e.currentTarget.src = "https://via.placeholder.com/40/EEE/94A3B8?text=U";
-              }}
-            />
+          {/* Collapsed State - Twitter/Facebook Style */}
+          {!isExpanded ? (
+            <div className="flex items-center gap-3">
+              {/* User Avatar */}
+              <img
+                src={userAvatar || "https://via.placeholder.com/40"}
+                alt={username}
+                className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-100"
+                onError={(e) => {
+                  e.currentTarget.src = "https://via.placeholder.com/40/EEE/94A3B8?text=U";
+                }}
+              />
 
-            {/* Post Input */}
-            <div className="flex-1">
-              {!isExpanded ? (
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="w-full rounded-full bg-slate-50 px-4 py-2.5 text-left text-slate-500 hover:bg-slate-100 transition-all duration-200 border border-slate-200"
-                >
-                  What's on your mind, {firstName}?
-                </button>
-              ) : (
-                <div className="space-y-3">
-                  {/* Post Type Selector */}
-                  <div className="relative" ref={dropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-                      disabled={isPosting}
-                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span className={selectedType.color}>{selectedType.label}</span>
-                      <ChevronDown size={16} className="text-slate-500" />
-                    </button>
-
-                    {/* Dropdown */}
-                    {showTypeDropdown && (
-                      <div className="absolute top-full left-0 mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-10 py-1">
-                        {POST_TYPES.map((type) => (
-                          <button
-                            key={type.value}
-                            onClick={() => {
-                              setPostType(type.value);
-                              setShowTypeDropdown(false);
-                            }}
-                            className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors ${
-                              type.value === postType ? "bg-slate-50" : ""
-                            }`}
-                          >
-                            <span className={type.color}>{type.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content Input */}
-                  <textarea
-                    ref={textareaRef}
-                    value={postContent}
-                    onChange={(e) => setPostContent(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={isPosting}
-                    placeholder={`What's on your mind, ${firstName}?`}
-                    className="w-full min-h-[120px] max-h-[300px] rounded-lg bg-slate-50 px-4 py-3 text-[15px] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent border border-slate-200 outline-none resize-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              {/* Trigger Input */}
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="flex-1 text-left px-5 py-3 rounded-full bg-slate-50 hover:bg-slate-100 transition-colors text-slate-500 font-medium"
+              >
+                What's on your mind, {firstName}?
+              </button>
+            </div>
+          ) : (
+            /* Expanded State */
+            <div className="space-y-3">
+              {/* Header with Avatar and Post Type */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={userAvatar || "https://via.placeholder.com/40"}
+                    alt={username}
+                    className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-100"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://via.placeholder.com/40/EEE/94A3B8?text=U";
+                    }}
                   />
-
-                  {/* Image Previews */}
-                  {imagePreviews.length > 0 && (
-                    <div
-                      className={`grid gap-2 ${
-                        imagePreviews.length === 1
-                          ? "grid-cols-1"
-                          : imagePreviews.length === 2
-                          ? "grid-cols-2"
-                          : "grid-cols-2"
-                      }`}
-                    >
-                      {imagePreviews.map((preview, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-48 object-cover rounded-lg border border-slate-200"
-                          />
-                          <button
-                            onClick={() => handleRemoveImage(index)}
-                            disabled={isPosting}
-                            className="absolute top-2 right-2 bg-slate-900/70 text-white p-1.5 rounded-full hover:bg-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Link Input */}
-                  {showLinkInput && (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="url"
-                        value={postLink}
-                        onChange={(e) => setPostLink(e.target.value)}
+                  <div>
+                    <p className="font-semibold text-slate-900">{username}</p>
+                    {/* Post Type Dropdown */}
+                    <div className="relative mt-0.5" ref={dropdownRef}>
+                      <button
+                        onClick={() => setShowTypeDropdown(!showTypeDropdown)}
                         disabled={isPosting}
-                        placeholder="https://example.com"
-                        className="flex-1 rounded-lg bg-slate-50 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent border border-slate-200 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${selectedType.bgColor} ${selectedType.color} ${selectedType.hoverColor} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        <selectedType.icon size={12} />
+                        <span>{selectedType.label}</span>
+                        <ChevronDown size={12} />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showTypeDropdown && (
+                        <div className="absolute top-full left-0 mt-1 min-w-[160px] rounded-xl border border-slate-200 bg-white shadow-xl z-20 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                          {POST_TYPES.map((type) => {
+                            const Icon = type.icon;
+                            return (
+                              <button
+                                key={type.value}
+                                onClick={() => {
+                                  setPostType(type.value);
+                                  setShowTypeDropdown(false);
+                                }}
+                                className={`w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm hover:bg-slate-50 transition-colors ${
+                                  type.value === postType ? "bg-slate-50" : ""
+                                }`}
+                              >
+                                <Icon size={14} className={type.color} />
+                                <span className={`font-medium ${type.color}`}>{type.label}</span>
+                                {type.value === postType && (
+                                  <CheckCircle size={14} className={`ml-auto ${type.color}`} />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Input */}
+              <textarea
+                ref={textareaRef}
+                value={postContent}
+                onChange={(e) => setPostContent(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isPosting}
+                placeholder={`What's on your mind, ${firstName}?`}
+                className="w-full min-h-[120px] max-h-[400px] px-0 py-2 text-[15px] text-slate-900 placeholder:text-slate-400 border-0 outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed focus:ring-0"
+                style={{ lineHeight: '1.5' }}
+              />
+
+              {/* Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div
+                  className={`grid gap-2 ${
+                    imagePreviews.length === 1
+                      ? "grid-cols-1"
+                      : imagePreviews.length === 2
+                      ? "grid-cols-2"
+                      : "grid-cols-2"
+                  }`}
+                >
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative group rounded-xl overflow-hidden">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-52 object-cover"
                       />
                       <button
-                        onClick={() => {
-                          setShowLinkInput(false);
-                          setPostLink("");
-                        }}
+                        onClick={() => handleRemoveImage(index)}
                         disabled={isPosting}
-                        className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-sm text-white p-1.5 rounded-full hover:bg-slate-900 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <X size={16} />
                       </button>
                     </div>
-                  )}
-
-                  {/* Add Media Buttons */}
-                  <div className="flex items-center gap-3">
-                    {images.length < 4 && (
-                      <>
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isPosting}
-                          className="inline-flex items-center gap-1.5 text-sm text-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Image size={16} />
-                          Add Photos ({images.length}/4)
-                        </button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleImageSelect}
-                          disabled={isPosting}
-                          className="hidden"
-                        />
-                      </>
-                    )}
-                    {!showLinkInput && (
-                      <button
-                        onClick={() => setShowLinkInput(true)}
-                        disabled={isPosting}
-                        className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Link2 size={16} />
-                        Add Link
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Error Message */}
-                  {postError && (
-                    <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">
-                      {postError}
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={handleCancel}
-                      disabled={isPosting}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <X size={16} />
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSubmitPost}
-                      disabled={!postContent.trim() || isPosting}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600 transition-all shadow-sm min-w-[100px] justify-center"
-                    >
-                      {postSuccess ? (
-                        <>
-                          <CheckCircle size={16} />
-                          Posted!
-                        </>
-                      ) : isPosting ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" />
-                          Posting...
-                        </>
-                      ) : (
-                        <>
-                          <Send size={16} />
-                          Post
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  ))}
                 </div>
               )}
+
+              {/* Link Input */}
+              {/* {showLinkInput && (
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                  <Link2 size={18} className="text-slate-400" />
+                  <input
+                    type="url"
+                    value={postLink}
+                    onChange={(e) => setPostLink(e.target.value)}
+                    disabled={isPosting}
+                    placeholder="Paste link here"
+                    className="flex-1 bg-transparent px-2 py-1 text-sm text-slate-900 placeholder:text-slate-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    onClick={() => {
+                      setShowLinkInput(false);
+                      setPostLink("");
+                    }}
+                    disabled={isPosting}
+                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )} */}
+
+              {/* Error Message */}
+              {postError && (
+                <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+                  <span className="mt-0.5">⚠️</span>
+                  <span>{postError}</span>
+                </div>
+              )}
+
+              {/* Divider */}
+              <div className="border-t border-slate-200" />
+
+              {/* Action Bar */}
+              <div className="flex items-center justify-between">
+                {/* Left Side - Media Buttons */}
+                <div className="flex items-center gap-1">
+                  {images.length < 4 && (
+                    <>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isPosting}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Add photos"
+                      >
+                        <Image size={20} className="text-green-500" />
+                        <span className="hidden sm:inline">Photo</span>
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageSelect}
+                        disabled={isPosting}
+                        className="hidden"
+                      />
+                    </>
+                  )}
+                  
+                  {/* {!showLinkInput && (
+                    <button
+                      onClick={() => setShowLinkInput(true)}
+                      disabled={isPosting}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Add link"
+                    >
+                      <Link2 size={20} className="text-blue-500" />
+                      <span className="hidden sm:inline">Link</span>
+                    </button>
+                  )} */}
+
+                  {/* Image Counter */}
+                  {images.length > 0 && (
+                    <span className="ml-2 text-xs text-slate-500 font-medium">
+                      {images.length}/4 photos
+                    </span>
+                  )}
+                </div>
+
+                {/* Right Side - Action Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCancel}
+                    disabled={isPosting}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmitPost}
+                    disabled={!postContent.trim() || isPosting}
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600 transition-all shadow-sm min-w-[90px] justify-center"
+                  >
+                    {postSuccess ? (
+                      <>
+                        <CheckCircle size={16} />
+                        Posted!
+                      </>
+                    ) : isPosting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Posting
+                      </>
+                    ) : (
+                      <>
+                        Post
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Quick Action Buttons - Show only when not expanded */}
-        {!isExpanded && (
+        {/* Quick Actions - Only show when collapsed */}
+        {/* {!isExpanded && (
           <div className="border-t border-slate-200 px-4 py-2">
             <div className="flex items-center justify-around">
               <button
@@ -403,40 +439,49 @@ const POST_TYPES = userData?.institutionalUser
                   setIsExpanded(true);
                   setTimeout(() => fileInputRef.current?.click(), 100);
                 }}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors group"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
-                <Image size={20} className="text-green-600 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">Photo</span>
+                <Image size={20} className="text-green-500" />
+                <span>Photo</span>
               </button>
-
+              
+              <div className="h-6 w-px bg-slate-200" />
+              
+              <button
+                onClick={() => {
+                  setIsExpanded(true);
+                  setShowLinkInput(true);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <Link2 size={20} className="text-blue-500" />
+                <span>Link</span>
+              </button>
+              
+              <div className="h-6 w-px bg-slate-200" />
+              
               <button
                 onClick={() => setIsExpanded(true)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors group"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
-                <Video size={20} className="text-red-600 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">Video</span>
-              </button>
-
-              <button
-                onClick={() => setIsExpanded(true)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors group"
-              >
-                <Smile size={20} className="text-yellow-600 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">Feeling</span>
+                <Smile size={20} className="text-amber-500" />
+                <span>Feeling</span>
               </button>
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Header Tabs */}
-      <div className="flex border-b border-slate-200 bg-white rounded-t-lg shadow-sm">
-        <TabButton label="General Posts" href="/feed" active={pathname === "/feed"} />
-        <TabButton
-          label="News & Notice"
-          href="/feed/news&notice"
-          active={pathname === "/feed/news&notice"}
-        />
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex items-center">
+          <TabButton label="General Posts" href="/feed" active={pathname === "/feed"} />
+          <TabButton
+            label="News & Notice"
+            href="/feed/news&notice"
+            active={pathname === "/feed/news&notice"}
+          />
+        </div>
       </div>
 
       {/* Content */}
@@ -457,13 +502,16 @@ function TabButton({
   return (
     <Link
       href={href}
-      className={`flex-1 text-center px-4 py-3 -mb-px font-medium text-sm border-b-2 transition-all ${
+      className={`flex-1 text-center px-6 py-3.5 font-semibold text-[15px] transition-all relative ${
         active
-          ? "border-blue-500 text-blue-600 bg-blue-50/50"
-          : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+          ? "text-blue-600"
+          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
       }`}
     >
       {label}
+      {active && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-t-full" />
+      )}
     </Link>
   );
 }

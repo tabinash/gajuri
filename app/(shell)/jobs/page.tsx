@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Search } from "lucide-react";
+import { Search, MapPin, Briefcase, DollarSign, Clock, Building2, ArrowRight } from "lucide-react";
 import { getAllJobs } from "@/repositories/JobRepository";
 
 type ApiJob = {
@@ -30,9 +30,11 @@ type Job = {
   type: "Full-time" | "Part-time" | "Contract" | "Internship" | "Remote";
   salary?: string;
   posted: string;
-  tags?: string[];
+  description: string;
+  category?: string;
+  open: boolean;
   mine?: boolean;
-  originalData: ApiJob; // Keep reference to original API data
+  originalData: ApiJob;
 };
 
 const TYPES = [
@@ -97,8 +99,10 @@ function mapApiToJob(j: ApiJob): Job {
     type: normalizeJobType(j.jobType),
     salary: formatSalary(j.salary),
     posted: relativeTimeFromISO(j.createdAt),
-    tags: j.category ? [j.category] : [],
-    originalData: j, // Store original API data
+    description: j.description || "",
+    category: j.category,
+    open: j.open,
+    originalData: j,
   };
 }
 
@@ -108,7 +112,7 @@ function Logo({ src, name }: { src?: string; name: string }) {
       <img
         src={src}
         alt={name}
-        className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
+        className="h-12 w-12 shrink-0 rounded-lg object-cover"
         onError={(e) => {
           e.currentTarget.src =
             "https://via.placeholder.com/80/EEE/94A3B8?text=Logo";
@@ -123,18 +127,20 @@ function Logo({ src, name }: { src?: string; name: string }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-200 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
+    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-base font-semibold text-white">
       {initials}
     </div>
   );
 }
 
-function JobCard({ job }: { job: Job }) {
-  const { id, title, company, logo, location, type, salary, posted, tags, originalData } = job;
+function JobFeedCard({ job }: { job: Job }) {
+  const { id, title, company, logo, location, type, salary, posted, description, category, open, originalData } = job;
+  const [expanded, setExpanded] = useState(false);
+  const shouldTruncate = description.length > 180;
+  const displayDescription = expanded || !shouldTruncate ? description : description.slice(0, 180) + "...";
 
   const handleSelect = () => {
     try {
-      // Store original API data in localStorage
       localStorage.setItem("selectedJob-abinash", JSON.stringify(originalData));
     } catch (err) {
       console.error("Failed to save job to localStorage:", err);
@@ -142,45 +148,124 @@ function JobCard({ job }: { job: Job }) {
   };
 
   return (
-    <Link
-      href={{ pathname: `/jobs/${id}`, query: { hide: "true" } }}
-      onClick={handleSelect}
-      className="block rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow"
-    >
+    <article className="rounded-xl border border-slate-200 bg-white hover:shadow-md transition-shadow duration-200">
       <div className="p-4">
+        {/* Header */}
         <div className="flex items-start gap-3">
           <Logo src={logo} name={company} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[15px] font-semibold text-slate-900">
-              {title}
-            </div>
-            <div className="truncate text-sm text-slate-600">{company}</div>
-            <div className="mt-1 text-[12px] text-slate-500">
-              {posted} • {location}
+            <Link
+              href={{ pathname: `/jobs/${id}`, query: { hide: "true" } }}
+              onClick={handleSelect}
+              className="group"
+            >
+              <h3 className="text-base font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                {title}
+              </h3>
+            </Link>
+            <p className="mt-0.5 text-sm text-slate-600">{company}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                <MapPin size={12} />
+                {location}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock size={12} />
+                {posted}
+              </span>
             </div>
           </div>
-          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700">
-            {type}
-          </span>
+          
+          {/* Status Badge */}
+          {!open && (
+            <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+              Closed
+            </span>
+          )}
         </div>
 
+        {/* Job Meta Info */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+            <Briefcase size={12} />
+            {type}
+          </span>
           {salary && (
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+            <span className="inline-flex items-center gap-1 rounded-md  px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100">
+              <DollarSign size={12} />
               {salary}
             </span>
           )}
-          {tags?.slice(0, 3).map((t) => (
-            <span
-              key={t}
-              className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
-            >
-              {t}
+          {category && (
+            <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              {category}
             </span>
-          ))}
+          )}
+        </div>
+
+        {/* Description */}
+        {description && (
+          <div className="mt-3">
+            <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">
+              {displayDescription}
+            </p>
+            {shouldTruncate && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                {expanded ? "Show less" : "Show more"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Action */}
+        <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+          <Link
+            href={{ pathname: `/jobs/${id}`, query: { hide: "true" } }}
+            onClick={handleSelect}
+            className="group inline-flex items-center gap-1.5 rounded-lg bg-[#1B74E4] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B74F6] transition-colors"
+          >
+            See Details
+            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+          
+
         </div>
       </div>
-    </Link>
+    </article>
+  );
+}
+
+function JobFeedSkeleton() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 animate-pulse">
+      <div className="flex items-start gap-3">
+        <div className="h-12 w-12 shrink-0 rounded-lg bg-slate-200" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-3/4 rounded bg-slate-200" />
+          <div className="h-3 w-1/2 rounded bg-slate-200" />
+          <div className="h-3 w-2/3 rounded bg-slate-200" />
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="h-6 w-20 rounded-md bg-slate-200" />
+        <div className="h-6 w-24 rounded-md bg-slate-200" />
+        <div className="h-6 w-16 rounded-md bg-slate-200" />
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <div className="h-3 w-full rounded bg-slate-200" />
+        <div className="h-3 w-full rounded bg-slate-200" />
+        <div className="h-3 w-3/4 rounded bg-slate-200" />
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-slate-100">
+        <div className="h-8 w-28 rounded-lg bg-slate-200" />
+      </div>
+    </div>
   );
 }
 
@@ -228,63 +313,94 @@ export default function JobsPage() {
         (j) =>
           j.title.toLowerCase().includes(t) ||
           j.company.toLowerCase().includes(t) ||
-          j.location.toLowerCase().includes(t)
+          j.location.toLowerCase().includes(t) ||
+          j.description.toLowerCase().includes(t)
       );
     }
     return arr;
   }, [items, type, q]);
 
   return (
-    <section className="space-y-4">
-      {/* Search + Type Filter */}
-      <div className="border-b border-slate-200 pb-3">
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Search bar */}
-          <div className="flex w-full items-center rounded-full bg-[#F0F2F5] px-3 ring-1 ring-transparent focus-within:ring-[#E4E6EB] sm:max-w-md">
-            <Search size={16} className="text-slate-500" />
+    <div className="w-full max-w-3xl ">
+      <section className="space-y-4 px-4 py-6">
+        {/* Search Bar */}
+        <div className="sticky top-0 z-10 rounded-xl border border-slate-200 bg-white shadow-sm backdrop-blur-sm">
+          <div className="flex items-center gap-3 p-3">
+            <Search size={18} className="text-slate-400" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search title, company, or location"
-              className="ml-2 h-9 w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
-            />
-          </div>
-
-          {/* Type Filter */}
-          <div className="relative w-48">
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-2.5 pr-10 text-sm text-slate-800 shadow-sm focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              aria-label="Job type"
-            >
-              {TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={16}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+              placeholder="Search jobs..."
+              className="flex-1 text-sm outline-none placeholder:text-slate-400"
             />
           </div>
         </div>
-      </div>
 
-      {/* States */}
-      {loading && <div className="text-sm text-slate-600">Loading…</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
-      {!loading && !error && filtered.length === 0 && (
-        <div className="text-sm text-slate-500">No jobs found.</div>
-      )}
+        {/* Filter Pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {TYPES.map((t) => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
+                type === t
+                  ? "bg-[#1B74E4] text-white shadow-sm"
+                  : "bg-white border border-slate-200 text-black hover:border-[#1B74F4] hover:shadow-sm"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
 
-      {/* Jobs Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((j) => (
-          <JobCard key={j.id} job={j} />
-        ))}
-      </div>
-    </section>
+        {/* Results Count */}
+        {!loading && filtered.length > 0 && (
+          <p className="text-xs text-slate-500">
+            {filtered.length} {filtered.length === 1 ? 'job' : 'jobs'} found
+          </p>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <JobFeedSkeleton key={i} />
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && filtered.length === 0 && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
+            <p className="text-sm text-slate-600">No jobs found matching your criteria.</p>
+            <button
+              onClick={() => {
+                setQ("");
+                setType("All types");
+              }}
+              className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
+
+        {/* Jobs Feed */}
+        {!loading && filtered.length > 0 && (
+          <div className="space-y-3">
+            {filtered.map((j) => (
+              <JobFeedCard key={j.id} job={j} />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

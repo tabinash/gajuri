@@ -159,3 +159,18 @@ export const updateProfileImage = async (userId, data) => {
     throw error;
   }
 }
+
+export const setImages  = async (data) => {
+  try {
+    console.log(`🌐 Setting images`)
+      const response = await http.post(`/profile`, data, { 
+        headers: { "Content-Type": "multipart/form-data" },
+        })
+        console.log("🚀 Set Images Response:", response);
+        return response;
+  }
+  catch (error) {
+    console.error(`❌ Error setting images:`, error);
+    throw error;
+  }
+}

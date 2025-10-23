@@ -35,7 +35,26 @@ export const authRepository = {
   otpVerification: async (otp) => {
     console.log("otp in repo:", otp);
     const response = await http.post("/auth/otp-verification", otp);
+    console.log("OTP Verification Response in Repo:", response);
     return response;
+  },
+  forgetPassword: async (email) => {
+    try {
+      const response = await http.post("/auth/forgot-password", { email });
+      return response;
+    } catch (error) {
+      console.error("Error during forget password:", error);
+      throw error;
+    }
+  },
+  resetPassword: async (data) => {
+    try {
+      const response = await http.post("/auth/reset-password", data);
+      return response;
+    } catch (error) {
+      console.error("Error during reset password:", error);
+      throw error;
+    }
   },
 };
 

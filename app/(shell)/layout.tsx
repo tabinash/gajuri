@@ -3,7 +3,6 @@ import React from "react";
 import LeftSidebar from "@/components/LeftSidebar";
 import RightSidebar from "@/components/RightSidebar";
 import { usePathname, useSearchParams } from "next/navigation";
-import TopHeader from "@/components/Header";
 
 export default function ShellLayout({
   children,
@@ -19,18 +18,16 @@ export default function ShellLayout({
     <div
       className={`min-h-dvh ${hide ? "max-w-7xl" : "max-w-6xl"}`}
     >
-      {/* Top header */}
-      {/* <TopHeader user={{ name: "Abinash" }} showUnreadDot /> */}
 
       {/* Left Sidebar — always visible */}
-      <aside className="fixed left-0 top-14 z-30 h-[calc(100dvh-56px)] w-[230px] border-r border-gray-200 bg-white px-3 py-4">
+      <aside className="fixed left-0 top-14  z-30 h-[calc(100dvh-56px)] w-[200px] border-r border-gray-200 bg-white ">
         <div className="h-full overflow-y-auto">
           <LeftSidebar />
         </div>
       </aside>
 
       {/* Main content area */}
-      <div className="pl-[260px]">
+      <div className="ml-[260px] ">
         <div className={`w-full ${isMessagesPage ?"ml-2":"px-8 py-4"} `}>
           <div
             className={`grid ${isMessagesPage ? "grid-cols-1 gap-0" : "grid-cols-13 gap-4"}`}
@@ -47,7 +44,7 @@ export default function ShellLayout({
             {/* Right Sidebar — hide on /messages */}
             {!hide && !isMessagesPage && (
               <aside className="col-span-4">
-                <div className="sticky space-y-4">
+                <div className=" h-[calc(100dvh-56px)] w-[280px] space-y-4 ">
                   <RightSidebar />
                 </div>
               </aside>

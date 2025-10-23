@@ -141,14 +141,31 @@ function MarketCard({ listing }: { listing: Listing }) {
         </div>
 
         <div className="mt-2 space-y-0.5 px-1 pb-2">
-          <div className="text-[13px] font-semibold tracking-tight text-slate-900">
+          <div className="text-sm font-semibold tracking-tight text-slate-900">
             {price.toUpperCase()}
           </div>
-          <div className="truncate text-[15px] text-slate-800">{title}</div>
-          {meta && <div className="text-[12px] text-slate-500">{meta}</div>}
+          <div className="truncate text-base text-slate-800">{title}</div>
+          {meta && <div className="text-sm text-slate-500">{meta}</div>}
         </div>
       </div>
     </Link>
+  );
+}
+
+function MarketCardSkeleton() {
+  return (
+    <div className="rounded-2xl bg-white animate-pulse">
+      <div className="p-2">
+        <div className="overflow-hidden rounded-xl">
+          <div className="h-[170px] w-full bg-slate-200" />
+        </div>
+        <div className="mt-2 space-y-2 px-1 pb-2">
+          <div className="h-4 w-16 rounded bg-slate-200" />
+          <div className="h-4 w-full rounded bg-slate-200" />
+          <div className="h-3 w-24 rounded bg-slate-200" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -197,25 +214,23 @@ export default function MarketPage() {
   }, [tab, category, items, currentUserId]);
 
   return (
-    <section className="space-y-4">
-      {/* Tabs */}
-      <div className="border-b border-slate-200 pb-3">
-        
-        {/* Category filter */}
-        <div className="mt-4 flex flex-col gap-2">
+    <section className="space-y-5">
+      {/* Filter Section */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="flex flex-col gap-3">
           <label
             htmlFor="category"
-            className="text-xs font-medium text-slate-500 uppercase tracking-wide"
+            className="text-sm font-semibold text-slate-700 uppercase tracking-wide"
           >
-            Filter by category
+            Filter by Category
           </label>
 
-          <div className="relative w-64">
+          <div className="relative w-full sm:w-64">
             <select
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-2.5 pr-10 text-sm text-slate-800 shadow-sm transition-all focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-2.5 pr-10 text-[15px] text-slate-800 shadow-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
               aria-label="Categories"
             >
               {CATEGORIES.map((c) => (
@@ -225,26 +240,55 @@ export default function MarketPage() {
               ))}
             </select>
             <ChevronDown
-              size={16}
+              size={18}
               className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
             />
           </div>
         </div>
       </div>
 
-      {/* States */}
-      {loading && <div className="text-sm text-slate-600">Loading…</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
-      {!loading && !error && listings.length === 0 && (
-        <div className="text-sm text-slate-500">No products found.</div>
+      {/* Loading State - Simple Shimmer Grid */}
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <MarketCardSkeleton key={i} />
+          ))}
+        </div>
       )}
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {listings.map((l) => (
-          <MarketCard key={l.id} listing={l} />
-        ))}
-      </div>
+      {/* Error State */}
+      {error && (
+        <div className="bg-white rounded-2xl border border-red-200 p-8">
+          <div className="text-center text-red-600">
+            <p className="font-semibold">Failed to load products</p>
+            <p className="text-sm mt-1">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && listings.length === 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-12">
+          <div className="text-center text-slate-500">
+            <p className="text-lg font-medium">No products found</p>
+            <p className="text-sm mt-1">
+              {category !== "All categories" 
+                ? `Try selecting a different category`
+                : `Check back later for new listings!`
+              }
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Products Grid */}
+      {!loading && !error && listings.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {listings.map((l) => (
+            <MarketCard key={l.id} listing={l} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

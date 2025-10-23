@@ -33,8 +33,13 @@ export default function Page() {
 
       const userProfile = await getUserProfile(email);
       console.log("✅ Fetched user profile:", userProfile);
+ if(userProfile.data.coverPhotoUrl && userProfile.data.profilePhotoUrl){
+  router.replace(from || "/feed");
+} else {
+  // Redirect to profile setup page
+  router.replace("/complete-profile");
+}
       // ✅ Redirect to the page user came from or home
-      router.replace(from || "/feed");
     } catch (err: any) {
       console.error("❌ Login failed:", err);
       setError(err?.response?.data?.message || "Login failed. Please try again.");
@@ -114,7 +119,7 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={!email.trim() || !pw.trim() || loading}
-                className="mt-2 w-full rounded-full bg-green-600 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 w-full rounded-full bg-[#1B74E4] px-6 py-3 text-[15px] font-medium text-white transition hover:bg-[#1B74E9] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>

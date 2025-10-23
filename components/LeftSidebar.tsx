@@ -2,15 +2,20 @@
 
 import Head from "next/head";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 import {
   Home,
   ShoppingBag,
   Compass,
   BriefcaseBusiness,
   MessageSquare,
+  User,
+  LogOut,
 } from "lucide-react";
-
+import logo from "@/assets/logo.png";
+ 
 export const SIDEBAR_WIDTH = 264;
 
 type Item = {
@@ -29,6 +34,10 @@ const items: Item[] = [
 
 export default function LeftSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  
   const fontStack =
     '"Inter", "Segoe UI", SegoeUI, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"';
   
@@ -38,6 +47,27 @@ export default function LeftSidebar() {
     id: userData?.id,
     name: userData?.username,
     avatar: userData?.profilePhotoUrl,
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    // Clear user data from localStorage - remove both keys
+    localStorage.removeItem("gajuri-authToken");
+    localStorage.removeItem("chemiki-userProfile");
+    
+    // Redirect to login page
+    router.push("/login");
   };
 
   return (
@@ -62,26 +92,21 @@ export default function LeftSidebar() {
       >
         <div className="flex h-full flex-col">
           {/* Brand */}
-          <div className="px-10 pt-5 pb-4">
+          <div className="px-10 pt-5 ">
             <Link href="/feed" className="flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center text-[#00A368]">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-7 w-7"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M12 4 3 11.2v1.3L5 12v8h14v-8l2 .5v-1.3L12 4zM9 14h6v4H9v-4z" />
-                </svg>
-              </span>
-              <span className="text-[25px] font-semibold leading-none text-[#00A368]">
-                Nextdoor
-              </span>
+              <Image
+                src={logo}
+                alt="Gajuri logo"
+                width={140}
+                height={60}
+                className="object-contain"
+                priority
+              />
             </Link>
           </div>
 
           {/* Nav */}
-          <nav className="p-4 px-6 flex-1 overflow-y-auto">
+          <nav className="p-4 px-6  flex-1 overflow-y-auto">
             <ul className="space-y-3">
               {items.map(({ label, href, icon: Icon }) => {
                 const active =
@@ -114,40 +139,51 @@ export default function LeftSidebar() {
                 );
               })}
             </ul>
-
-            {/* Post button */}
-            <div className="mt-6">
-              <Link
-                href="/post"
-                className="mx-1 block w-[180px] rounded-full bg-[#00A368] px-5 py-2.5 text-center text-[15px] font-medium text-white transition-colors hover:brightness-95"
-              >
-                Post
-              </Link>
-            </div>
           </nav>
 
           {/* Bottom: profile */}
-          <div className="mb-9">
+          <div className="mb-9 relative" ref={menuRef}>
             <div className="px-6 pb-3">
-              <Link
-                href={{
-                  pathname: "/profile",
-                  query: { userId: profile.id },
-                }}
-                className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-slate-50"
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="w-full flex items-center gap-3 rounded-md px-3 py-2 hover:bg-slate-50 transition-colors"
               >
                 <img
                   src={profile.avatar}
                   alt={`${profile.name} avatar`}
                   className="h-9 w-9 rounded-full object-cover"
                 />
-                <div className="min-w-0">
-                  <div className="truncate text-[15px] font-medium text-slate-900">
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="truncate text-base font-semibold text-slate-900">
                     {profile.name}
                   </div>
-                  <div className="text-[13px] text-slate-500">View profile</div>
+                  <div className="text-sm text-slate-500">View options</div>
                 </div>
-              </Link>
+              </button>
+
+              {/* Dropdown Menu */}
+              {showProfileMenu && (
+                <div className="absolute bottom-full left-6 right-6 mb-2 rounded-lg border border-slate-200 bg-white shadow-lg z-50 py-1">
+                  <Link
+                    href={{
+                      pathname: "/profile",
+                      query: { userId: profile.id },
+                    }}
+                    onClick={() => setShowProfileMenu(false)}
+                    className="w-full px-4 py-2.5 text-left text-base text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                  >
+                    <User size={18} className="text-slate-500" />
+                    Visit Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2.5 text-left text-base text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                  >
+                    <LogOut size={18} className="text-red-500" />
+                    Log Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

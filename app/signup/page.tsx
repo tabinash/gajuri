@@ -1,40 +1,35 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+const [phoneNumber, setPhoneNumber] = useState("")
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [show, setShow] = useState(false);
-  const [agree, setAgree] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [agree, setAgree] = useState(true);
+  const [error, setError] = useState("");
 
-  const canContinue = useMemo(() => {
-    const emailOk = /.+@.+\..+/.test(email);
-    return name.trim().length >= 2 && emailOk && password.length >= 6 && agree;
-  }, [name, email, password, agree]);
-
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    if (!canContinue) {
-      setError("Please complete all fields correctly.");
+    setError("");
+
+    if (!username.trim() || !email || !phoneNumber || !password || !agree) {
+      setError("Please complete all fields and agree to terms.");
       return;
     }
-    // Persist minimal info for the OTP step
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(
-        "signup:data",
-        JSON.stringify({ name, email, password })
-      );
-    }
-  router.push("/signup/details");
-  }
+
+    sessionStorage.setItem(
+      "signup:data",
+      JSON.stringify({ username, email, password, phoneNumber })
+    );
+    router.push("/signup/details");
+  };
 
   return (
     <div className="w-full">
@@ -46,9 +41,17 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
           <input
             type="text"
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-600/20"
+          />
+
+          <input
+            type="tel"
+            placeholder="Phone number (e.g., +97798xxxxxxx)"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
             className="w-full rounded-[12px] border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-600/20"
           />
 
@@ -62,7 +65,7 @@ export default function SignupPage() {
 
           <div className="relative">
             <input
-              type={show ? "text" : "password"}
+              type={showPassword ? "text" : "password"}
               placeholder="Create a password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -70,11 +73,11 @@ export default function SignupPage() {
             />
             <button
               type="button"
-              aria-label={show ? "Hide password" : "Show password"}
-              onClick={() => setShow((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-2 my-auto grid h-9 w-9 place-items-center rounded-md text-gray-500 hover:bg-gray-100"
             >
-              {show ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
@@ -86,9 +89,9 @@ export default function SignupPage() {
               className="mt-1"
             />
             <span>
-              By continuing with sign up, you agree to our {""}
-              <Link href="#" className="underline">Privacy Policy</Link>, {""}
-              <Link href="#" className="underline">Cookie Policy</Link>, and {""}
+              By continuing with sign up, you agree to our{" "}
+              <Link href="#" className="underline">Privacy Policy</Link>,{" "}
+              <Link href="#" className="underline">Cookie Policy</Link>, and{" "}
               <Link href="#" className="underline">Member Agreement</Link>.
             </span>
           </label>
@@ -101,28 +104,21 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={!canContinue}
-            className="mt-1 w-full rounded-full bg-green-600 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-1 w-full rounded-full bg-[#1B74E4] px-6 py-3 text-[15px] font-medium text-white transition hover:bg-[#1B74E9] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Continue
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-700">
-          Already have an account? {""}
+          Already have an account?{" "}
           <Link href="/login" className="font-medium underline hover:text-gray-900">
             Log in
           </Link>
         </p>
       </div>
 
-      <button
-        type="button"
-        className="mx-auto mt-4 block w-full max-w-[520px] rounded-full bg-white px-6 py-3 text-gray-800 shadow hover:bg-gray-50 transition"
-        onClick={() => router.push("/signup/otp")}
-      >
-        Have an invite code?
-      </button>
+      
     </div>
   );
 }

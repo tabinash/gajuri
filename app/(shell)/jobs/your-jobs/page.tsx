@@ -1,8 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {  getJobByUserId } from "@/repositories/JobRepository";
+import { 
+  Search, 
+  MapPin, 
+  Briefcase, 
+  DollarSign, 
+  Clock, 
+  Building2, 
+  ArrowRight,
+  ChevronDown 
+} from "lucide-react";
+import { getAllJobs } from "@/repositories/JobRepository";
 
 type ApiJob = {
   id: number | string;
@@ -29,9 +39,21 @@ type Job = {
   type: "Full-time" | "Part-time" | "Contract" | "Internship" | "Remote";
   salary?: string;
   posted: string;
-  tags?: string[];
+  description: string;
+  category?: string;
+  open: boolean;
+  mine?: boolean;
   originalData: ApiJob;
 };
+
+const TYPES = [
+  "All types",
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Remote",
+] as const;
 
 function relativeTimeFromISO(iso?: string) {
   if (!iso) return "";
@@ -86,7 +108,9 @@ function mapApiToJob(j: ApiJob): Job {
     type: normalizeJobType(j.jobType),
     salary: formatSalary(j.salary),
     posted: relativeTimeFromISO(j.createdAt),
-    tags: j.category ? [j.category] : [],
+    description: j.description || "",
+    category: j.category,
+    open: j.open,
     originalData: j,
   };
 }
@@ -97,7 +121,7 @@ function Logo({ src, name }: { src?: string; name: string }) {
       <img
         src={src}
         alt={name}
-        className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
+        className="h-12 w-12 shrink-0 rounded-lg object-cover"
         onError={(e) => {
           e.currentTarget.src =
             "https://via.placeholder.com/80/EEE/94A3B8?text=Logo";
@@ -112,14 +136,17 @@ function Logo({ src, name }: { src?: string; name: string }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-200 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
+    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-base font-semibold text-white">
       {initials}
     </div>
   );
 }
 
-function JobCard({ job }: { job: Job }) {
-  const { id, title, company, logo, location, type, salary, tags, originalData } = job;
+function JobGridCard({ job }: { job: Job }) {
+  const { id, title, company, logo, location, type, salary, posted, description, category, open, originalData } = job;
+  const [expanded, setExpanded] = useState(false);
+  const shouldTruncate = description.length > 120; // Shorter for grid layout
+  const displayDescription = expanded || !shouldTruncate ? description : description.slice(0, 120) + "...";
 
   const handleSelect = () => {
     try {
@@ -130,62 +157,144 @@ function JobCard({ job }: { job: Job }) {
   };
 
   return (
-    <Link
-      href={{ pathname: `/jobs/${id}`, query: { hide: "true" } }}
-      onClick={handleSelect}
-      className="block rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow"
-    >
-      <div className="p-4">
+    <article className="rounded-xl border border-slate-200 bg-white hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
+      <div className="p-4 flex-1 flex flex-col">
+        {/* Header */}
         <div className="flex items-start gap-3">
           <Logo src={logo} name={company} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[15px] font-semibold text-slate-900">
-              {title}
-            </div>
-            <div className="truncate text-sm text-slate-600">{company}</div>
-            <div className="mt-1 text-[12px] text-slate-500">
-              {location}
+            <Link
+              href={{ pathname: `/jobs/${id}`, query: { hide: "true" } }}
+              onClick={handleSelect}
+              className="group"
+            >
+              <h3 className="text-base font-semibold text-slate-900  transition-colors line-clamp-2">
+                {title}
+              </h3>
+            </Link>
+            <p className="mt-0.5 text-sm text-slate-600">{company}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                <MapPin size={12} />
+                {location}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock size={12} />
+                {posted}
+              </span>
             </div>
           </div>
-          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700">
-            {type}
-          </span>
         </div>
 
+        {/* Status Badge - Positioned absolutely for grid layout */}
+        {!open && (
+          <div className="mt-2">
+            <span className="inline-block rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+              Closed
+            </span>
+          </div>
+        )}
+
+        {/* Job Meta Info */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+            <Briefcase size={12} />
+            {type}
+          </span>
           {salary && (
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+              <DollarSign size={12} />
               {salary}
             </span>
           )}
-          {tags?.slice(0, 3).map((t) => (
-            <span
-              key={t}
-              className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
-            >
-              {t}
+          {category && (
+            <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              {category}
             </span>
-          ))}
+          )}
+        </div>
+
+        {/* Description */}
+        {description && (
+          <div className="mt-3 flex-1">
+            <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">
+              {displayDescription}
+            </p>
+            {shouldTruncate && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setExpanded(!expanded);
+                }}
+                className="mt-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                {expanded ? "Show less" : "Show more"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Action */}
+        <div className="mt-4 pt-3 border-t border-slate-100">
+          <Link
+            href={{ pathname: `/jobs/${id}`, query: { hide: "true" } }}
+            onClick={handleSelect}
+            className="group inline-flex items-center gap-1.5 rounded-lg bg-[#1B74E4] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B74F6] transition-colors"
+          >
+            See Details
+            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }
 
-export default function UserJobs() {
+function JobGridCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 animate-pulse h-full">
+      <div className="flex items-start gap-3">
+        <div className="h-12 w-12 shrink-0 rounded-lg bg-slate-200" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-3/4 rounded bg-slate-200" />
+          <div className="h-3 w-1/2 rounded bg-slate-200" />
+          <div className="h-3 w-2/3 rounded bg-slate-200" />
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="h-6 w-20 rounded-md bg-slate-200" />
+        <div className="h-6 w-24 rounded-md bg-slate-200" />
+        <div className="h-6 w-16 rounded-md bg-slate-200" />
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <div className="h-3 w-full rounded bg-slate-200" />
+        <div className="h-3 w-full rounded bg-slate-200" />
+        <div className="h-3 w-3/4 rounded bg-slate-200" />
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-slate-100">
+        <div className="h-8 w-28 rounded-lg bg-slate-200" />
+      </div>
+    </div>
+  );
+}
+
+export default function JobsPage() {
+  const [type, setType] = useState<(typeof TYPES)[number]>("All types");
+  const [q, setQ] = useState("");
   const [items, setItems] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
-  
+
   useEffect(() => {
     let ignore = false;
     const run = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await getJobByUserId(userData?.id);
-        console.log("Fetched jobs:", res.data);
+        const res = await getAllJobs();
         const rows: ApiJob[] = Array.isArray((res as any)?.data)
           ? (res as any).data
           : Array.isArray(res)
@@ -205,19 +314,77 @@ export default function UserJobs() {
     };
   }, []);
 
-  return (
-    <section className="space-y-4">
-      {loading && <div className="text-sm text-slate-600">Loading…</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
-      {!loading && !error && items.length === 0 && (
-        <div className="text-sm text-slate-500">No jobs found.</div>
-      )}
+  const filtered = useMemo(() => {
+    let arr = items;
+    if (type !== "All types") {
+      arr = arr.filter((j) => j.type === type);
+    }
+    const t = q.trim().toLowerCase();
+    if (t) {
+      arr = arr.filter(
+        (j) =>
+          j.title.toLowerCase().includes(t) ||
+          j.company.toLowerCase().includes(t) ||
+          j.location.toLowerCase().includes(t) ||
+          j.description.toLowerCase().includes(t)
+      );
+    }
+    return arr;
+  }, [items, type, q]);
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((j) => (
-          <JobCard key={j.id} job={j} />
-        ))}
-      </div>
-    </section>
+  return (
+    <div className="w-full max-w-7xl mx-auto">
+      <section className="space-y-4 px-4 py-6">
+        {/* Search + Type Filter */}
+
+        {/* Results Count */}
+        {!loading && filtered.length > 0 && (
+          <p className="text-xs text-slate-500">
+            {filtered.length} {filtered.length === 1 ? 'job' : 'jobs'} found
+          </p>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <JobGridCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && filtered.length === 0 && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
+            <p className="text-sm text-slate-600">No jobs found matching your criteria.</p>
+            <button
+              onClick={() => {
+                setQ("");
+                setType("All types");
+              }}
+              className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
+
+        {/* Jobs Grid */}
+        {!loading && filtered.length > 0 && (
+          <div className="flex max-w-3xl flex-col gap-4">
+            {filtered.map((j) => (
+              <JobGridCard key={j.id} job={j} />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

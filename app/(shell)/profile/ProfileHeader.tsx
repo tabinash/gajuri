@@ -114,8 +114,68 @@ export default function ProfileHeader({ userId }: { userId: string }) {
     profile?.profilePhotoUrl ||
     "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=160&q=80";
 
+  // Loading State
+  if (loading) {
+    return (
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white animate-pulse">
+        {/* Cover Shimmer */}
+        <div className="h-40 w-full bg-slate-200" />
+
+        {/* Profile Details Shimmer */}
+        <div className="relative px-6 pb-8">
+          {/* Avatar Shimmer */}
+          <div className="absolute -top-10 left-6">
+            <div className="h-20 w-20 rounded-full border-4 border-white bg-slate-200" />
+          </div>
+
+          {/* Actions Shimmer */}
+          <div className="mt-3 flex justify-end">
+            <div className="h-8 w-24 rounded-md bg-slate-200" />
+          </div>
+
+          {/* Info Shimmer */}
+          <div className="mt-10 space-y-4">
+            {/* Name */}
+            <div className="h-6 w-48 rounded bg-slate-200" />
+            
+            {/* Email */}
+            <div className="h-4 w-56 rounded bg-slate-200" />
+
+            {/* Details List */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-slate-200" />
+                <div className="h-4 w-40 rounded bg-slate-200" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-slate-200" />
+                <div className="h-4 w-32 rounded bg-slate-200" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-slate-200" />
+                <div className="h-4 w-44 rounded bg-slate-200" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <section className="overflow-hidden rounded-2xl border border-red-200 bg-white">
+        <div className="p-8 text-center">
+          <p className="text-lg font-semibold text-red-600">Failed to load profile</p>
+          <p className="mt-1 text-sm text-slate-600">{error}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {/* Cover */}
       <div className="relative h-40 w-full">
         <img
@@ -136,7 +196,7 @@ export default function ProfileHeader({ userId }: { userId: string }) {
           <img
             src={avatarSrc}
             alt={`${profile?.username ?? "User"} avatar`}
-            className="h-20 w-20 rounded-full border-4 border-white object-cover"
+            className="h-20 w-20 rounded-full border-4 border-white object-cover shadow-md"
             onError={(e) => {
               e.currentTarget.src =
                 "https://via.placeholder.com/160/EEE/94A3B8?text=Avatar";
@@ -150,14 +210,14 @@ export default function ProfileHeader({ userId }: { userId: string }) {
             <Link
               href="/profile/edit"
               onClick={handleEditProfile}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold shadow-sm hover:bg-slate-50 transition-colors"
             >
               Edit profile
             </Link>
           ) : (
             <Link
               href={`/message?userId=${profile?.id ?? userId}`}
-              className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-95"
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
               aria-label="Message user"
             >
               <MessageCircle size={16} />
@@ -169,48 +229,48 @@ export default function ProfileHeader({ userId }: { userId: string }) {
         {/* Info */}
         <div className="mt-10">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-slate-900">
-              {profile?.username || (loading ? "Loading..." : "Unknown User")}
+            <h1 className="text-2xl font-bold text-slate-900">
+              {profile?.username || "Unknown User"}
             </h1>
             {profile?.verified && (
-              <CheckCircle2 size={18} className="text-green-600" aria-label="Verified" />
+              <CheckCircle2 size={20} className="text-green-600" aria-label="Verified" />
             )}
             {profile?.institutionalUser && (
-              <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+              <span className="ml-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
                 {profile.institutionCategory || "Institutional"}
               </span>
             )}
           </div>
 
-          {profile?.email && <p className="text-slate-600">{profile.email}</p>}
+          {profile?.email && <p className="mt-1 text-slate-600">{profile.email}</p>}
 
-          <ul className="mt-4 space-y-2 text-sm text-slate-700">
+          <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
             {location && (
-              <li className="flex items-center gap-2">
-                <MapPin size={16} className="text-slate-500" />
+              <li className="flex items-center gap-2.5">
+                <MapPin size={16} className="text-slate-500 flex-shrink-0" />
                 <span className="truncate">{location}</span>
               </li>
             )}
 
             {joined && (
-              <li className="flex items-center gap-2">
-                <CalendarDays size={16} className="text-slate-500" />
+              <li className="flex items-center gap-2.5">
+                <CalendarDays size={16} className="text-slate-500 flex-shrink-0" />
                 <span>Joined {joined}</span>
               </li>
             )}
 
             {profile?.email && (
-              <li className="flex items-center gap-2">
-                <Mail size={16} className="text-slate-500" />
-                <a href={`mailto:${profile.email}`} className="text-blue-600 hover:underline">
+              <li className="flex items-center gap-2.5">
+                <Mail size={16} className="text-slate-500 flex-shrink-0" />
+                <a href={`mailto:${profile.email}`} className="text-blue-600 hover:underline truncate">
                   {profile.email}
                 </a>
               </li>
             )}
 
             {profile?.phoneNumber && (
-              <li className="flex items-center gap-2">
-                <Phone size={16} className="text-slate-500" />
+              <li className="flex items-center gap-2.5">
+                <Phone size={16} className="text-slate-500 flex-shrink-0" />
                 <a href={`tel:${profile.phoneNumber}`} className="text-blue-600 hover:underline">
                   {profile.phoneNumber}
                 </a>
@@ -218,25 +278,19 @@ export default function ProfileHeader({ userId }: { userId: string }) {
             )}
 
             {website && (
-              <li className="flex items-center gap-2">
-                <Globe size={16} className="text-slate-500" />
+              <li className="flex items-center gap-2.5">
+                <Globe size={16} className="text-slate-500 flex-shrink-0" />
                 <a
                   href={website.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline truncate"
                 >
                   {website.label}
                 </a>
               </li>
             )}
           </ul>
-
-          {error && (
-            <p className="mt-3 text-sm text-red-600">
-              {error}
-            </p>
-          )}
         </div>
       </div>
     </section>

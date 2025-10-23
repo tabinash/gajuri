@@ -89,12 +89,10 @@ function mapApiToProduct(p: ApiProduct): ProductItem {
 }
 
 function ProductCard({ product }: { product: ProductItem }) {
- 
-
   return (
     <Link
       href={{ pathname: `/market/${product.id}`, query: { hide: "true" } }}
-      className="block rounded-2xl bg-white p-2 shadow-sm transition hover:shadow-md"
+      className="block  bg-white  transition hover:shadow-md"
     >
       <div className="overflow-hidden rounded-xl">
         <img
@@ -110,17 +108,32 @@ function ProductCard({ product }: { product: ProductItem }) {
       </div>
 
       <div className="mt-2 space-y-0.5 px-1 pb-2">
-        <div className="text-[13px] font-semibold tracking-tight text-slate-900">
+        <div className="text-sm font-semibold tracking-tight text-slate-900">
           {product.price.toUpperCase()}
         </div>
-        <div className="truncate text-[15px] text-slate-800">
+        <div className="truncate text-base text-slate-800">
           {product.title}
         </div>
-        <div className="text-[12px] text-slate-500">
+        <div className="text-sm text-slate-500">
           {[product.time, product.city].filter(Boolean).join(" • ")}
         </div>
       </div>
     </Link>
+  );
+}
+
+function ProductCardSkeleton() {
+  return (
+    <div className="rounded-2xl bg-white p-2 shadow-sm animate-pulse">
+      <div className="overflow-hidden rounded-xl">
+        <div className="h-[170px] w-full bg-slate-200" />
+      </div>
+      <div className="mt-2 space-y-2 px-1 pb-2">
+        <div className="h-4 w-16 rounded bg-slate-200" />
+        <div className="h-4 w-full rounded bg-slate-200" />
+        <div className="h-3 w-24 rounded bg-slate-200" />
+      </div>
+    </div>
   );
 }
 
@@ -129,7 +142,7 @@ export default function ProductListPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // TODO: you’ll handle this user ID part
+  // TODO: you'll handle this user ID part
   const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
 
   useEffect(() => {
@@ -160,17 +173,25 @@ export default function ProductListPage() {
 
   return (
     <section className="space-y-4">
-      {loading && <div className="text-sm text-slate-600">Loading…</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
+      {error && <div className="text-base text-red-600">{error}</div>}
       {!loading && !error && products.length === 0 && (
-        <div className="text-sm text-slate-500">No products found.</div>
+        <div className="text-base text-slate-500">No products found.</div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
