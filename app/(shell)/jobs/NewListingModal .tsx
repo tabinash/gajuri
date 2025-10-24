@@ -164,7 +164,7 @@ export default function NewJobPostingModal({ open, onClose }: Props) {
                 <input
                   value={salary}
                   onChange={(e) => setSalary(e.target.value)}
-                  placeholder="Salary (e.g., NPR 50,000 - 80,000)"
+                  placeholder="Salary (Rs... )"
                   disabled={isSubmitting}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none disabled:opacity-60"
                 />

@@ -23,7 +23,7 @@ type NewListingModalProps = {
 export default function NewListingModal({ open, onClose }: NewListingModalProps) {
   const [productData, setProductData] = useState({
     name: "",
-    category: "other",
+    category: "ELECTRONIC",
     price: "",
     location: "",
     condition: "used",
@@ -73,7 +73,7 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
     imagePreviews.forEach((u) => URL.revokeObjectURL(u));
     setProductData({
       name: "",
-      category: "other",
+      category: "ELECTRONIC",
       price: "",
       location: "",
       condition: "used",
@@ -294,16 +294,13 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="relative">
-                  <DollarSign
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+       
                   <input
                     id="price"
                     name="price"
                     value={productData.price}
                     onChange={handleChange}
-                    placeholder="Price"
+                    placeholder="Price Rs."
                     disabled={isSubmitting}
                     className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none disabled:opacity-60"
                   />

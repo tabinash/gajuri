@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const PUBLIC_ROUTES = ["/login", "/signup", "/details", "/otp", "/success"];
+const PUBLIC_ROUTES = ["/login", "/signup","/signup/success",  "/forgot-password", "/reset-password"];
 
 export default function RootLayout({
   children,
