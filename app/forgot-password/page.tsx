@@ -39,8 +39,8 @@ export default function ForgotPasswordPage() {
       console.log("✅ Reset token sent:", response.data);
       
       // Store the token from response
-      if (response.data.token) {
-        setToken(response.data.token);
+      if (response.data.data.token) {
+        setToken(response.data.data.token);
       }
       
       // Move to step 2
