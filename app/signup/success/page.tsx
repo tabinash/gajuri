@@ -23,7 +23,7 @@ export default function SuccessPage() {
       <div className="mx-auto w-full max-w-[520px] rounded-[18px] bg-white shadow-2xl p-6 sm:p-8 text-center">
         <CheckCircle2 className="mx-auto text-green-600" size={56} />
         <h1 className="mt-3 text-[22px] font-semibold text-gray-800">
-          You're all set{ name ? `, ${name.split(" ")[0]}` : "" }!
+          You are all set{ name ? `, ${name.split(" ")[0]}` : "" }!
         </h1>
         <p className="mt-2 text-sm text-gray-600">
           Your account has been created successfully.

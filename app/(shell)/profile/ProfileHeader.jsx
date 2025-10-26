@@ -1,59 +1,57 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { MapPin, CalendarDays, Mail, Phone, Globe, CheckCircle2, MessageCircle } from "lucide-react";
+import {
+  MapPin,
+  CalendarDays,
+  Mail,
+  Phone,
+  Globe,
+  CheckCircle2,
+  MessageCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { getUserProfileById } from "@/repositories/UserRepository";
 
-type ApiUser = {
-  id: number;
-  username: string;
-  email: string;
-  phoneNumber?: string;
-  dateOfBirth?: string;
-  district?: string;
-  palika?: string;
-  ward?: string;
-  institutionCategory?: string;
-  institutionalUser?: boolean;
-  website?: string;
-  verified?: boolean;
-  profilePhotoUrl?: string;
-  coverPhotoUrl?: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-function formatJoined(date?: string) {
+function formatJoined(date) {
   if (!date) return undefined;
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return undefined;
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-function normalizeWebsite(url?: string) {
+function normalizeWebsite(url) {
   if (!url) return undefined;
   const hasScheme = /^https?:\/\//i.test(url);
   const href = hasScheme ? url : `https://${url}`;
   try {
     const u = new URL(href);
-    return { href, label: u.host.replace(/^www\./, "") + (u.pathname === "/" ? "" : u.pathname) };
+    return {
+      href,
+      label:
+        u.host.replace(/^www\./, "") +
+        (u.pathname === "/" ? "" : u.pathname),
+    };
   } catch {
     return { href, label: url };
   }
 }
 
-function buildLocation(u?: ApiUser) {
+function buildLocation(u) {
   if (!u) return undefined;
   const parts = [u.palika, u.district].filter(Boolean).join(", ");
   if (u.ward) return parts ? `${parts} — Ward ${u.ward}` : `Ward ${u.ward}`;
   return parts || undefined;
 }
 
-export default function ProfileHeader({ userId }: { userId: string }) {
-  const [profile, setProfile] = useState<ApiUser | null>(null);
+export default function ProfileHeader({ userId }) {
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
   const isOwnProfile = Number(userData?.id) === Number(userId);
@@ -66,7 +64,7 @@ export default function ProfileHeader({ userId }: { userId: string }) {
         setError(null);
         const res = await getUserProfileById(userId);
         if (!ignore) setProfile(res?.data ?? null);
-      } catch (e: any) {
+      } catch (e) {
         if (!ignore) setError(e?.message || "Failed to load profile");
       } finally {
         if (!ignore) setLoading(false);
@@ -82,7 +80,6 @@ export default function ProfileHeader({ userId }: { userId: string }) {
   const location = useMemo(() => buildLocation(profile || undefined), [profile]);
   const website = useMemo(() => normalizeWebsite(profile?.website), [profile?.website]);
 
-  // Save profile data to localStorage before navigating to edit page
   const handleEditProfile = () => {
     if (profile) {
       const editData = {
@@ -100,12 +97,11 @@ export default function ProfileHeader({ userId }: { userId: string }) {
         profilePhotoUrl: profile.profilePhotoUrl || "",
         coverPhotoUrl: profile.coverPhotoUrl || "",
       };
-      
+
       localStorage.setItem("chemiki-editProfileData", JSON.stringify(editData));
     }
   };
 
-  // Fallback images
   const coverSrc =
     profile?.coverPhotoUrl ||
     "https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1600&q=80";
@@ -114,34 +110,20 @@ export default function ProfileHeader({ userId }: { userId: string }) {
     profile?.profilePhotoUrl ||
     "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=160&q=80";
 
-  // Loading State
   if (loading) {
     return (
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white animate-pulse">
-        {/* Cover Shimmer */}
         <div className="h-40 w-full bg-slate-200" />
-
-        {/* Profile Details Shimmer */}
         <div className="relative px-6 pb-8">
-          {/* Avatar Shimmer */}
           <div className="absolute -top-10 left-6">
             <div className="h-20 w-20 rounded-full border-4 border-white bg-slate-200" />
           </div>
-
-          {/* Actions Shimmer */}
           <div className="mt-3 flex justify-end">
             <div className="h-8 w-24 rounded-md bg-slate-200" />
           </div>
-
-          {/* Info Shimmer */}
           <div className="mt-10 space-y-4">
-            {/* Name */}
             <div className="h-6 w-48 rounded bg-slate-200" />
-            
-            {/* Email */}
             <div className="h-4 w-56 rounded bg-slate-200" />
-
-            {/* Details List */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded bg-slate-200" />
@@ -162,7 +144,6 @@ export default function ProfileHeader({ userId }: { userId: string }) {
     );
   }
 
-  // Error State
   if (error) {
     return (
       <section className="overflow-hidden rounded-2xl border border-red-200 bg-white">
@@ -176,7 +157,6 @@ export default function ProfileHeader({ userId }: { userId: string }) {
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* Cover */}
       <div className="relative h-40 w-full">
         <img
           src={coverSrc}
@@ -189,9 +169,7 @@ export default function ProfileHeader({ userId }: { userId: string }) {
         />
       </div>
 
-      {/* Profile Details */}
       <div className="relative px-6 pb-8">
-        {/* Avatar */}
         <div className="absolute -top-10 left-6">
           <img
             src={avatarSrc}
@@ -204,7 +182,6 @@ export default function ProfileHeader({ userId }: { userId: string }) {
           />
         </div>
 
-        {/* Actions */}
         <div className="mt-3 flex justify-end">
           {isOwnProfile ? (
             <Link
@@ -226,7 +203,6 @@ export default function ProfileHeader({ userId }: { userId: string }) {
           )}
         </div>
 
-        {/* Info */}
         <div className="mt-10">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-slate-900">
@@ -262,7 +238,10 @@ export default function ProfileHeader({ userId }: { userId: string }) {
             {profile?.email && (
               <li className="flex items-center gap-2.5">
                 <Mail size={16} className="text-slate-500 flex-shrink-0" />
-                <a href={`mailto:${profile.email}`} className="text-blue-600 hover:underline truncate">
+                <a
+                  href={`mailto:${profile.email}`}
+                  className="text-blue-600 hover:underline truncate"
+                >
                   {profile.email}
                 </a>
               </li>
@@ -271,7 +250,10 @@ export default function ProfileHeader({ userId }: { userId: string }) {
             {profile?.phoneNumber && (
               <li className="flex items-center gap-2.5">
                 <Phone size={16} className="text-slate-500 flex-shrink-0" />
-                <a href={`tel:${profile.phoneNumber}`} className="text-blue-600 hover:underline">
+                <a
+                  href={`tel:${profile.phoneNumber}`}
+                  className="text-blue-600 hover:underline"
+                >
                   {profile.phoneNumber}
                 </a>
               </li>

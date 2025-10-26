@@ -5,20 +5,7 @@ import { X, ChevronDown, MapPin } from "lucide-react";
 import { Loader2, CheckCircle } from "lucide-react";
 import { createJob } from "@/repositories/JobRepository";
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-  onNext?: (payload: {
-    title: string;
-    salary: string;
-    location: string;
-    contactInfo: string;
-    description: string;
-    jobType: string;
-  }) => void;
-};
-
-export default function NewJobPostingModal({ open, onClose }: Props) {
+export default function NewJobPostingModal({ open, onClose }) {
   const [title, setTitle] = useState("");
   const [salary, setSalary] = useState("");
   const [location, setLocation] = useState("");
@@ -28,7 +15,7 @@ export default function NewJobPostingModal({ open, onClose }: Props) {
 
   // API UX state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
   const isValid = title.trim().length > 0 && description.trim().length > 0 && !isSubmitting;
@@ -59,7 +46,7 @@ export default function NewJobPostingModal({ open, onClose }: Props) {
 
     try {
       const res = await createJob(payload);
-      console.log("Job created:", (res as any)?.data ?? res);
+      console.log("Job created:", res?.data ?? res);
       setSuccess(true);
 
       // brief success state then close
@@ -69,7 +56,7 @@ export default function NewJobPostingModal({ open, onClose }: Props) {
         setSuccess(false);
         onClose();
       }, 800);
-    } catch (e: any) {
+    } catch (e) {
       console.error("Error creating job:", e);
       const msg =
         e?.response?.data?.message ||

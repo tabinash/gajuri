@@ -1,38 +1,12 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Candy, CalendarDays, MapPin, Users } from "lucide-react";
 
 export default function RightSidebar() {
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [top, setTop] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!sidebarRef.current || !containerRef.current) return;
-
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const sidebarRect = sidebarRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-
-      // If sidebar height < remaining container height, keep it sticky
-      if (sidebarRect.height < containerRect.bottom) {
-        setTop(Math.min(window.scrollY, containerRect.bottom - sidebarRect.height));
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
-    <div ref={containerRef} className="  ">
-      <aside
-        ref={sidebarRef}
-        className="space-y-4"
-      >
+    <div className="  ">
+      <aside className="space-y-4">
         {/* Alerts */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-start gap-3">
@@ -58,7 +32,7 @@ export default function RightSidebar() {
         {/* Treat Map promo */}
         <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-5 text-white shadow-sm">
           <h3 className="text-base font-semibold leading-6">
-            Don’t be a ghost, explore Treat Map
+            Do not be a ghost, explore Treat Map
           </h3>
           <Link
             href="/treat-map"

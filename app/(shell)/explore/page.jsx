@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -6,30 +5,16 @@ import { CheckCircle2 } from "lucide-react";
 import { exploreRepository } from "@/repositories/exploreRepository";
 import Link from "next/link";
 
-type ApiUser = {
-  id: number;
-  username: string;
-  email: string;
-  phoneNumber?: string;
-  district?: string;
-  palika?: string;
-  ward?: string;
-  verified?: boolean;
-  profilePhotoUrl?: string;
-  coverPhotoUrl?: string;
-  createdAt?: string;
-};
-
-function buildLocation(u: Partial<ApiUser>) {
+function buildLocation(u) {
   const parts = [u.palika, u.district].filter(Boolean).join(", ");
   return u.ward ? (parts ? `${parts} — Ward ${u.ward}` : `Ward ${u.ward}`) : parts;
 }
 
 export default function ExplorePage() {
   const [q, setQ] = useState("");
-  const [items, setItems] = useState<ApiUser[]>([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -38,9 +23,9 @@ export default function ExplorePage() {
         setLoading(true);
         setError(null);
         const res = await exploreRepository.getExploreData();
-        const rows: ApiUser[] = Array.isArray(res?.data) ? res.data : [];
+        const rows = Array.isArray(res?.data) ? res.data : [];
         if (!ignore) setItems(rows);
-      } catch (e: any) {
+      } catch (e) {
         if (!ignore) setError(e?.message || "Failed to load data");
       } finally {
         if (!ignore) setLoading(false);
@@ -150,7 +135,7 @@ export default function ExplorePage() {
                     className="h-12 w-12 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-100"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
-                      const fallback = e.currentTarget.nextSibling as HTMLElement;
+                      const fallback = e.currentTarget.nextSibling;
                       if (fallback) fallback.style.display = "flex";
                     }}
                   />

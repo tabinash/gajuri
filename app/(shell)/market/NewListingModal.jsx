@@ -1,11 +1,9 @@
-// NewListingModal.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import {
   X,
   Image as ImageIcon,
-  DollarSign,
   Package,
   MapPin,
   ChevronDown,
@@ -15,12 +13,7 @@ import {
 } from "lucide-react";
 import { addProduct } from "@/repositories/MarketplaceRepository";
 
-type NewListingModalProps = {
-  open: boolean;
-  onClose: () => void;
-};
-
-export default function NewListingModal({ open, onClose }: NewListingModalProps) {
+export default function NewListingModal({ open, onClose }) {
   const [productData, setProductData] = useState({
     name: "",
     category: "ELECTRONIC",
@@ -31,28 +24,27 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
     description: "",
   });
 
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     return () => imagePreviews.forEach((u) => URL.revokeObjectURL(u));
   }, [imagePreviews]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => setProductData((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleChange = (e) =>
+    setProductData((p) => ({ ...p, [e.target.name]: e.target.value }));
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const next = [...images, ...files].slice(0, 10); // up to 10
+    const next = [...images, ...files].slice(0, 10); // max 10
     setImages(next);
 
     imagePreviews.forEach((u) => URL.revokeObjectURL(u));
@@ -61,7 +53,7 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleRemoveImage = (idx: number) => {
+  const handleRemoveImage = (idx) => {
     const nextImages = images.filter((_, i) => i !== idx);
     const nextPreviews = imagePreviews.filter((_, i) => i !== idx);
     URL.revokeObjectURL(imagePreviews[idx]);
@@ -84,7 +76,7 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
     setImagePreviews([]);
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
     setError(null);
     setSuccess(false);
@@ -106,10 +98,8 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
     images.forEach((img) => formData.append("images", img));
 
     try {
-      // If your repository uses axios, this will show real upload progress.
-      // Casting to any to avoid TS complaints if your function signature differs.
-      await (addProduct as any)(formData, {
-        onUploadProgress: (evt: any) => {
+      await addProduct(formData, {
+        onUploadProgress: (evt) => {
           if (!evt?.total) return;
           const pct = Math.round((evt.loaded / evt.total) * 100);
           setUploadProgress(pct);
@@ -119,7 +109,6 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
       setSuccess(true);
       setUploadProgress(100);
 
-      // Brief success state, then close
       setTimeout(() => {
         resetForm();
         setIsSubmitting(false);
@@ -127,9 +116,13 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
         onClose();
         setSuccess(false);
       }, 900);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to add product:", err);
-      setError(err?.response?.data?.message || err?.message || "Failed to add product. Please try again.");
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to add product. Please try again."
+      );
       setIsSubmitting(false);
       setUploadProgress(null);
     }
@@ -145,13 +138,11 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop - disable close on click while submitting */}
       <div
         className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
         onClick={!isSubmitting ? onClose : undefined}
       />
 
-      {/* Modal */}
       <div
         className="relative w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-2xl bg-white shadow-2xl"
         aria-busy={isSubmitting}
@@ -167,7 +158,9 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
             <X size={20} />
           </button>
 
-          <h2 className="text-sm sm:text-base font-semibold text-slate-800">New listing</h2>
+          <h2 className="text-sm sm:text-base font-semibold text-slate-800">
+            New listing
+          </h2>
 
           <button
             type="button"
@@ -191,7 +184,6 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
           </button>
         </div>
 
-        {/* Upload progress bar */}
         {uploadProgress !== null && (
           <div className="h-1 bg-slate-200">
             <div
@@ -201,9 +193,10 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
           </div>
         )}
 
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto px-4 sm:px-6 py-5 space-y-4">
-          {/* Error banner */}
+        <form
+          onSubmit={handleSubmit}
+          className="overflow-y-auto px-4 sm:px-6 py-5 space-y-4"
+        >
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
@@ -223,8 +216,12 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
                   <ImageIcon size={22} className="text-slate-600" />
                 </div>
                 <div className="text-left">
-                  <div className="text-[13px] font-medium text-slate-900">Add photos</div>
-                  <div className="text-xs text-slate-500">JPG/PNG, up to 10 photos.</div>
+                  <div className="text-[13px] font-medium text-slate-900">
+                    Add photos
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    JPG/PNG, up to 10 photos.
+                  </div>
                 </div>
               </button>
 
@@ -294,7 +291,6 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="relative">
-       
                   <input
                     id="price"
                     name="price"
@@ -368,7 +364,6 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
                 </div>
               </div>
 
-              {/* Pickup location */}
               <div>
                 <label className="block text-xs font-semibold tracking-wide text-slate-600 mb-2">
                   Pickup location
@@ -393,12 +388,13 @@ export default function NewListingModal({ open, onClose }: NewListingModalProps)
           </div>
         </form>
 
-        {/* Submitting overlay */}
         {isSubmitting && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex flex-col items-center justify-center gap-3">
             <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
             <div className="text-sm text-slate-700">
-              {uploadProgress !== null ? `Uploading… ${uploadProgress}%` : "Uploading…"}
+              {uploadProgress !== null
+                ? `Uploading… ${uploadProgress}%`
+                : "Uploading…"}
             </div>
           </div>
         )}

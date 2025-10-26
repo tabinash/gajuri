@@ -2,40 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, MapPin, Briefcase, DollarSign, Clock, Building2, ArrowRight } from "lucide-react";
+import { MapPin, Briefcase, Clock, ArrowRight } from "lucide-react";
 import { getAllJobs } from "@/repositories/JobRepository";
-
-type ApiJob = {
-  id: number | string;
-  title: string;
-  description: string;
-  category: string;
-  jobType: string;
-  salary: number;
-  location: string;
-  open: boolean;
-  contactNo: string;
-  createdAt: string;
-  userId: number | string;
-  username: string;
-  profilePicture?: string;
-};
-
-type Job = {
-  id: string;
-  title: string;
-  company: string;
-  logo?: string;
-  location: string;
-  type: "Full-time" | "Part-time" | "Contract" | "Internship" | "Remote";
-  salary?: string;
-  posted: string;
-  description: string;
-  category?: string;
-  open: boolean;
-  mine?: boolean;
-  originalData: ApiJob;
-};
 
 const TYPES = [
   "All types",
@@ -44,14 +12,14 @@ const TYPES = [
   "Contract",
   "Internship",
   "Remote",
-] as const;
+];
 
-function relativeTimeFromISO(iso?: string) {
+function relativeTimeFromISO(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-  const units: [label: string, sec: number][] = [
+  const units = [
     ["year", 31536000],
     ["month", 2592000],
     ["week", 604800],
@@ -66,7 +34,7 @@ function relativeTimeFromISO(iso?: string) {
   return "just now";
 }
 
-function formatSalary(n?: number) {
+function formatSalary(n) {
   if (typeof n !== "number" || Number.isNaN(n)) return undefined;
   try {
     return new Intl.NumberFormat(undefined, {
@@ -79,7 +47,7 @@ function formatSalary(n?: number) {
   }
 }
 
-function normalizeJobType(v?: string): Job["type"] {
+function normalizeJobType(v) {
   const t = (v || "").toLowerCase().replace(/[_-]/g, " ");
   if (t.includes("full")) return "Full-time";
   if (t.includes("part")) return "Part-time";
@@ -89,7 +57,7 @@ function normalizeJobType(v?: string): Job["type"] {
   return "Full-time";
 }
 
-function mapApiToJob(j: ApiJob): Job {
+function mapApiToJob(j) {
   return {
     id: String(j.id),
     title: j.title || "Untitled role",
@@ -106,7 +74,7 @@ function mapApiToJob(j: ApiJob): Job {
   };
 }
 
-function Logo({ src, name }: { src?: string; name: string }) {
+function Logo({ src, name }) {
   if (src) {
     return (
       <img
@@ -133,24 +101,42 @@ function Logo({ src, name }: { src?: string; name: string }) {
   );
 }
 
-function JobFeedCard({ job }: { job: Job }) {
-  const { id, title, company, logo, location, type, salary, posted, description, category, open, originalData } = job;
-  const [expanded, setExpanded] = useState(false);
-  const shouldTruncate = description.length > 180;
-  const displayDescription = expanded || !shouldTruncate ? description : description.slice(0, 180) + "...";
+function JobGridCard({ job }) {
+  const {
+    id,
+    title,
+    company,
+    logo,
+    location,
+    type,
+    salary,
+    posted,
+    description,
+    category,
+    open,
+    originalData,
+  } = job;
 
-  const handleSelect = () => {
+  const [expanded, setExpanded] = useState(false);
+  const shouldTruncate = description.length > 120;
+  const displayDescription =
+    expanded || !shouldTruncate
+      ? description
+      : description.slice(0, 120) + "...";
+
+const handleSelect = () => {
+  if (typeof window !== 'undefined') {
     try {
       localStorage.setItem("selectedJob-abinash", JSON.stringify(originalData));
     } catch (err) {
       console.error("Failed to save job to localStorage:", err);
     }
-  };
+  }
+};
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white hover:shadow-md transition-shadow duration-200">
-      <div className="p-4">
-        {/* Header */}
+    <article className="rounded-xl border border-slate-200 bg-white hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
+      <div className="p-4 flex-1 flex flex-col">
         <div className="flex items-start gap-3">
           <Logo src={logo} name={company} />
           <div className="min-w-0 flex-1">
@@ -159,7 +145,7 @@ function JobFeedCard({ job }: { job: Job }) {
               onClick={handleSelect}
               className="group"
             >
-              <h3 className="text-base font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+              <h3 className="text-base font-semibold text-slate-900 transition-colors line-clamp-2">
                 {title}
               </h3>
             </Link>
@@ -175,24 +161,23 @@ function JobFeedCard({ job }: { job: Job }) {
               </span>
             </div>
           </div>
-          
-          {/* Status Badge */}
-          {!open && (
-            <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-              Closed
-            </span>
-          )}
         </div>
 
-        {/* Job Meta Info */}
+        {!open && (
+          <div className="mt-2">
+            <span className="inline-block rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+              Closed
+            </span>
+          </div>
+        )}
+
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
             <Briefcase size={12} />
             {type}
           </span>
           {salary && (
-            <span className="inline-flex items-center gap-1 rounded-md  px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100">
-              <DollarSign size={12} />
+            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
               {salary}
             </span>
           )}
@@ -203,15 +188,17 @@ function JobFeedCard({ job }: { job: Job }) {
           )}
         </div>
 
-        {/* Description */}
         {description && (
-          <div className="mt-3">
+          <div className="mt-3 flex-1">
             <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">
               {displayDescription}
             </p>
             {shouldTruncate && (
               <button
-                onClick={() => setExpanded(!expanded)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setExpanded(!expanded);
+                }}
                 className="mt-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
               >
                 {expanded ? "Show less" : "Show more"}
@@ -220,27 +207,27 @@ function JobFeedCard({ job }: { job: Job }) {
           </div>
         )}
 
-        {/* Action */}
-        <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+        <div className="mt-4 pt-3 border-t border-slate-100">
           <Link
             href={{ pathname: `/jobs/${id}`, query: { hide: "true" } }}
             onClick={handleSelect}
             className="group inline-flex items-center gap-1.5 rounded-lg bg-[#1B74E4] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B74F6] transition-colors"
           >
             See Details
-            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            <ArrowRight
+              size={14}
+              className="group-hover:translate-x-0.5 transition-transform"
+            />
           </Link>
-          
-
         </div>
       </div>
     </article>
   );
 }
 
-function JobFeedSkeleton() {
+function JobGridCardSkeleton() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 animate-pulse">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 animate-pulse h-full">
       <div className="flex items-start gap-3">
         <div className="h-12 w-12 shrink-0 rounded-lg bg-slate-200" />
         <div className="min-w-0 flex-1 space-y-2">
@@ -270,11 +257,11 @@ function JobFeedSkeleton() {
 }
 
 export default function JobsPage() {
-  const [type, setType] = useState<(typeof TYPES)[number]>("All types");
+  const [type, setType] = useState("All types");
   const [q, setQ] = useState("");
-  const [items, setItems] = useState<Job[]>([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -283,14 +270,14 @@ export default function JobsPage() {
         setLoading(true);
         setError(null);
         const res = await getAllJobs();
-        const rows: ApiJob[] = Array.isArray((res as any)?.data)
-          ? (res as any).data
+        const rows = Array.isArray(res?.data)
+          ? res.data
           : Array.isArray(res)
-          ? (res as any)
+          ? res
           : [];
         const mapped = rows.map(mapApiToJob);
         if (!ignore) setItems(mapped);
-      } catch (err: any) {
+      } catch (err) {
         if (!ignore) setError(err?.message || "Failed to load jobs");
       } finally {
         if (!ignore) setLoading(false);
@@ -304,9 +291,7 @@ export default function JobsPage() {
 
   const filtered = useMemo(() => {
     let arr = items;
-    if (type !== "All types") {
-      arr = arr.filter((j) => j.type === type);
-    }
+    if (type !== "All types") arr = arr.filter((j) => j.type === type);
     const t = q.trim().toLowerCase();
     if (t) {
       arr = arr.filter(
@@ -321,65 +306,33 @@ export default function JobsPage() {
   }, [items, type, q]);
 
   return (
-    <div className="w-full max-w-3xl ">
+    <div className="w-full max-w-7xl mx-auto">
       <section className="space-y-4 px-4 py-6">
-        {/* Search Bar */}
-        <div className="sticky top-0 z-10 rounded-xl border border-slate-200 bg-white shadow-sm backdrop-blur-sm">
-          <div className="flex items-center gap-3 p-3">
-            <Search size={18} className="text-slate-400" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search jobs..."
-              className="flex-1 text-sm outline-none placeholder:text-slate-400"
-            />
-          </div>
-        </div>
-
-        {/* Filter Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {TYPES.map((t) => (
-            <button
-              key={t}
-              onClick={() => setType(t)}
-              className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
-                type === t
-                  ? "bg-[#1B74E4] text-white shadow-sm"
-                  : "bg-white border border-slate-200 text-black hover:border-[#1B74F4] hover:shadow-sm"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        {/* Results Count */}
         {!loading && filtered.length > 0 && (
           <p className="text-xs text-slate-500">
-            {filtered.length} {filtered.length === 1 ? 'job' : 'jobs'} found
+            {filtered.length} {filtered.length === 1 ? "job" : "jobs"} found
           </p>
         )}
 
-        {/* Loading State */}
         {loading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <JobFeedSkeleton key={i} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <JobGridCardSkeleton key={i} />
             ))}
           </div>
         )}
 
-        {/* Error State */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
             {error}
           </div>
         )}
 
-        {/* Empty State */}
         {!loading && !error && filtered.length === 0 && (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
-            <p className="text-sm text-slate-600">No jobs found matching your criteria.</p>
+            <p className="text-sm text-slate-600">
+              No jobs found matching your criteria.
+            </p>
             <button
               onClick={() => {
                 setQ("");
@@ -392,11 +345,10 @@ export default function JobsPage() {
           </div>
         )}
 
-        {/* Jobs Feed */}
         {!loading && filtered.length > 0 && (
-          <div className="space-y-3">
+          <div className="flex max-w-3xl flex-col gap-4">
             {filtered.map((j) => (
-              <JobFeedCard key={j.id} job={j} />
+              <JobGridCard key={j.id} job={j} />
             ))}
           </div>
         )}

@@ -4,41 +4,13 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProductByUserId } from "@/repositories/MarketplaceRepository";
 
-type ApiProduct = {
-  id: number | string;
-  name: string;
-  description?: string;
-  category: string;
-  condition?: string;
-  price: number;
-  available?: boolean;
-  images?: string[];
-  location?: string;
-  createdAt?: string;
-  userId?: number | string;
-  username?: string;
-  ownerContact?: string;
-  profilePicture?: string;
-};
-
-// Simplified mapped product type
-type ProductItem = {
-  id: string;
-  title: string;
-  price: string;
-  time: string;
-  city: string;
-  image: string;
-  raw: ApiProduct;
-};
-
 // Helper functions
-function formatTime(iso?: string) {
+function formatTime(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
   const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-  const units: [label: string, sec: number][] = [
+  const units = [
     ["year", 31536000],
     ["month", 2592000],
     ["week", 604800],
@@ -53,7 +25,7 @@ function formatTime(iso?: string) {
   return "just now";
 }
 
-function formatPrice(n?: number) {
+function formatPrice(n) {
   if (!n || n <= 0) return "FREE";
   try {
     return new Intl.NumberFormat(undefined, {
@@ -66,17 +38,17 @@ function formatPrice(n?: number) {
   }
 }
 
-function getFirstImage(arr?: string[]) {
+function getFirstImage(arr) {
   const src = Array.isArray(arr) && arr.length > 0 ? arr[0] : "";
   return src || "https://via.placeholder.com/400x300/EEE/94A3B8?text=Item";
 }
 
-function getCity(loc?: string) {
+function getCity(loc) {
   if (!loc) return "";
   return loc.split(",")[0]?.trim() || "";
 }
 
-function mapApiToProduct(p: ApiProduct): ProductItem {
+function mapApiToProduct(p) {
   return {
     id: String(p.id),
     title: p.name ?? "Untitled",
@@ -88,11 +60,11 @@ function mapApiToProduct(p: ApiProduct): ProductItem {
   };
 }
 
-function ProductCard({ product }: { product: ProductItem }) {
+function ProductCard({ product }) {
   return (
     <Link
       href={{ pathname: `/market/${product.id}`, query: { hide: "true" } }}
-      className="block  bg-white  transition hover:shadow-md"
+      className="block bg-white transition hover:shadow-md"
     >
       <div className="overflow-hidden rounded-xl">
         <img
@@ -111,9 +83,7 @@ function ProductCard({ product }: { product: ProductItem }) {
         <div className="text-sm font-semibold tracking-tight text-slate-900">
           {product.price.toUpperCase()}
         </div>
-        <div className="truncate text-base text-slate-800">
-          {product.title}
-        </div>
+        <div className="truncate text-base text-slate-800">{product.title}</div>
         <div className="text-sm text-slate-500">
           {[product.time, product.city].filter(Boolean).join(" • ")}
         </div>
@@ -138,12 +108,9 @@ function ProductCardSkeleton() {
 }
 
 export default function ProductListPage() {
-  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // TODO: you'll handle this user ID part
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -153,12 +120,16 @@ export default function ProductListPage() {
         setLoading(true);
         setError(null);
 
+        const userData = JSON.parse(
+          localStorage.getItem("chemiki-userProfile") || "null"
+        );
+
         const res = await getProductByUserId(userData?.id);
-        const rows: ApiProduct[] = Array.isArray(res?.data) ? res.data : [];
+        const rows = Array.isArray(res?.data) ? res.data : [];
         const mapped = rows.map(mapApiToProduct);
 
         if (!ignore) setProducts(mapped);
-      } catch (e: any) {
+      } catch (e) {
         if (!ignore) setError(e?.message || "Failed to load products");
       } finally {
         if (!ignore) setLoading(false);

@@ -26,26 +26,24 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
 
   // Step 1: Request password reset
-  const handleRequestReset = async (e: React.FormEvent) => {
+  const handleRequestReset = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      // Call API to send reset token to email
       const response = await axios.post("https://test.gajuri.com/api/auth/forgot-password", {
-        email
+        email,
       });
+
       console.log("✅ Reset token sent:", response.data);
-      
-      // Store the token from response
+
       if (response.data.data.token) {
         setToken(response.data.data.token);
       }
-      
-      // Move to step 2
+
       setStep(2);
-    } catch (err: any) {
+    } catch (err) {
       console.error("❌ Request reset failed:", err);
       setError(err?.response?.data?.message || "Failed to send reset email. Please try again.");
     } finally {
@@ -54,10 +52,9 @@ export default function ForgotPasswordPage() {
   };
 
   // Step 2: Reset password with token
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
-    
-    // Validate passwords match
+
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -72,19 +69,16 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      // Call API with email, token, newPassword, and otp
       const response = await axios.post("https://test.gajuri.com/api/auth/reset-password", {
         email,
         token,
         newPassword,
-        otp
+        otp,
       });
-      
+
       console.log("✅ Password reset successful:", response.data);
-      
-      // Move to success step
       setStep(3);
-    } catch (err: any) {
+    } catch (err) {
       console.error("❌ Password reset failed:", err);
       setError(err?.response?.data?.message || "Failed to reset password. Please try again.");
     } finally {
@@ -103,12 +97,9 @@ export default function ForgotPasswordPage() {
       />
       <div className="absolute inset-0 bg-black/10" />
 
-      {/* Centered column */}
       <div className="relative mx-auto flex min-h-dvh w-full max-w-[640px] items-center justify-center p-4 sm:p-6">
         <div className="w-full">
-          {/* Card */}
           <div className="mx-auto w-full max-w-[520px] rounded-[18px] bg-white p-6 shadow-2xl sm:p-8">
-            {/* Step 1: Enter Email */}
             {step === 1 && (
               <>
                 <h1 className="text-center text-[22px] font-semibold text-gray-800">
@@ -146,7 +137,10 @@ export default function ForgotPasswordPage() {
                 </form>
 
                 <div className="mt-4 text-center">
-                  <Link href="/login" className="inline-flex items-center gap-1 text-sm text-gray-700 underline hover:text-gray-900">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-1 text-sm text-gray-700 underline hover:text-gray-900"
+                  >
                     <ArrowLeft size={14} />
                     Back to sign in
                   </Link>
@@ -154,7 +148,6 @@ export default function ForgotPasswordPage() {
               </>
             )}
 
-            {/* Step 2: Enter Token and New Password */}
             {step === 2 && (
               <>
                 <h1 className="text-center text-[22px] font-semibold text-gray-800">
@@ -192,8 +185,7 @@ export default function ForgotPasswordPage() {
                     </label>
                     <button
                       type="button"
-                      aria-label={showPw ? "Hide password" : "Show password"}
-                      onClick={() => setShowPw((v) => !v)}
+                      onClick={() => setShowPw(!showPw)}
                       className="absolute inset-y-0 right-2 my-auto grid h-9 w-9 place-items-center rounded-md text-gray-500 hover:bg-gray-100"
                     >
                       {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -215,8 +207,7 @@ export default function ForgotPasswordPage() {
                     </label>
                     <button
                       type="button"
-                      aria-label={showConfirmPw ? "Hide password" : "Show password"}
-                      onClick={() => setShowConfirmPw((v) => !v)}
+                      onClick={() => setShowConfirmPw(!showConfirmPw)}
                       className="absolute inset-y-0 right-2 my-auto grid h-9 w-9 place-items-center rounded-md text-gray-500 hover:bg-gray-100"
                     >
                       {showConfirmPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -248,12 +239,16 @@ export default function ForgotPasswordPage() {
               </>
             )}
 
-            {/* Step 3: Success */}
             {step === 3 && (
               <>
                 <div className="text-center">
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                    <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="h-8 w-8 text-green-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>

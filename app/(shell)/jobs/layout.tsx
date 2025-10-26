@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
-import NewListingModal from "./NewListingModal ";
+import NewListingModal from "./NewListingModal";
 
 type Props = {
   children: React.ReactNode;

@@ -5,38 +5,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { getProductsByCategory } from "@/repositories/MarketplaceRepository";
 
-// API shape
-type ApiProduct = {
-  id: number | string;
-  name: string;
-  description?: string;
-  category: string;
-  condition?: string;
-  price: number;
-  available?: boolean;
-  images?: string[];
-  location?: string;
-  createdAt?: string;
-  userId?: number | string;
-  username?: string;
-  ownerContact?: string;
-  profilePicture?: string;
-};
-
-// Keep Listing to match original card props
-type Listing = {
-  id: string;
-  title: string;
-  price: string;        // "FREE" | "Rs 175"
-  time: string;         // relative time
-  distance: string;     // not in API -> ""
-  city: string;         // derived from location
-  image: string;        // first image or placeholder
-  mine?: boolean;       // optional (when you have current user id)
-  category: string;
-  raw: ApiProduct;      // full API row for detail page
-};
-
+// Category options
 const CATEGORIES = [
   "All categories",
   "ELECTRONIC",
@@ -45,16 +14,15 @@ const CATEGORIES = [
   "FURNITURE",
   "FASHION",
   "BEAUTY",
-] as const;
+];
 
-
-// helpers
-function relativeTimeFromISO(iso?: string) {
+// Helpers
+function relativeTimeFromISO(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
   const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-  const units: [label: string, sec: number][] = [
+  const units = [
     ["year", 31536000],
     ["month", 2592000],
     ["week", 604800],
@@ -69,55 +37,54 @@ function relativeTimeFromISO(iso?: string) {
   return "just now";
 }
 
-function formatPrice(n?: number) {
+function formatPrice(n) {
   if (!n || n <= 0) return "FREE";
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: "NPR", maximumFractionDigits: 0 }).format(n);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "NPR",
+      maximumFractionDigits: 0,
+    }).format(n);
   } catch {
     return `Rs ${n}`;
   }
 }
 
-function firstImage(arr?: string[]) {
+function firstImage(arr) {
   const src = Array.isArray(arr) && arr.length > 0 ? arr[0] : "";
   return src || "https://via.placeholder.com/400x300/EEE/94A3B8?text=Item";
 }
 
-function cityFromLocation(loc?: string) {
+function cityFromLocation(loc) {
   if (!loc) return "";
-  // Take first segment before comma as a compact city label
   return loc.split(",")[0]?.trim() || "";
 }
 
-function mapApiToListing(p: ApiProduct): Listing {
+function mapApiToListing(p) {
   return {
     id: String(p.id),
     title: p.name ?? "Untitled",
     price: formatPrice(p.price),
     time: relativeTimeFromISO(p.createdAt),
-    distance: "", // API has no distance
+    distance: "",
     city: cityFromLocation(p.location),
     image: firstImage(p.images),
     category: p.category ?? "",
-    // Optional mine flag if you have current user id available:
-    // mine: currentUserId && String(p.userId) === String(currentUserId),
     mine: false,
     raw: p,
   };
 }
 
-function MarketCard({ listing }: { listing: Listing }) {
+function MarketCard({ listing }) {
   const { id, title, price, time, distance, city, image } = listing;
 
   const handleClick = () => {
     try {
       const key = `market:product`;
-      localStorage.setItem(key, JSON.stringify(listing.raw)); // save full API row
-      // localStorage.setItem("market:lastSelectedId", String(id));
+      localStorage.setItem(key, JSON.stringify(listing.raw));
     } catch {}
   };
 
-  // Build meta row like original, but skip empty parts (distance may be empty)
   const meta = [time, distance, city].filter(Boolean).join(" • ");
 
   return (
@@ -170,14 +137,13 @@ function MarketCardSkeleton() {
 }
 
 export default function MarketPage() {
-  const [tab, setTab] = useState<"all" | "mine">("all");
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All categories");
-  const [items, setItems] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState("all");
+  const [category, setCategory] = useState("All categories");
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Replace with your signed-in user id if you want "Your listings" to filter
-  const currentUserId: string | null = null;
+  const currentUserId = null;
 
   useEffect(() => {
     let ignore = false;
@@ -186,11 +152,11 @@ export default function MarketPage() {
         setLoading(true);
         setError(null);
         const apiCategory = category === "All categories" ? "" : category;
-        const res = await getProductsByCategory(apiCategory as any);
-        const rows: ApiProduct[] = Array.isArray(res?.data) ? res.data : [];
+        const res = await getProductsByCategory(apiCategory);
+        const rows = Array.isArray(res?.data) ? res.data : [];
         const mapped = rows.map(mapApiToListing);
         if (!ignore) setItems(mapped);
-      } catch (e: any) {
+      } catch (e) {
         if (!ignore) setError(e?.message || "Failed to load products");
       } finally {
         if (!ignore) setLoading(false);
@@ -208,7 +174,9 @@ export default function MarketPage() {
       arr = arr.filter((l) => String(l.raw.userId ?? "") === currentUserId);
     }
     if (category !== "All categories") {
-      arr = arr.filter((l) => l.category?.toLowerCase() === category.toLowerCase());
+      arr = arr.filter(
+        (l) => l.category?.toLowerCase() === category.toLowerCase()
+      );
     }
     return arr;
   }, [tab, category, items, currentUserId]);
@@ -229,7 +197,7 @@ export default function MarketPage() {
             <select
               id="category"
               value={category}
-              onChange={(e) => setCategory(e.target.value as any)}
+              onChange={(e) => setCategory(e.target.value)}
               className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-2.5 pr-10 text-[15px] text-slate-800 shadow-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
               aria-label="Categories"
             >
@@ -247,7 +215,7 @@ export default function MarketPage() {
         </div>
       </div>
 
-      {/* Loading State - Simple Shimmer Grid */}
+      {/* Loading State */}
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -272,10 +240,9 @@ export default function MarketPage() {
           <div className="text-center text-slate-500">
             <p className="text-lg font-medium">No products found</p>
             <p className="text-sm mt-1">
-              {category !== "All categories" 
+              {category !== "All categories"
                 ? `Try selecting a different category`
-                : `Check back later for new listings!`
-              }
+                : `Check back later for new listings!`}
             </p>
           </div>
         </div>

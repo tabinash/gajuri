@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import PostCard from "../feed/PostCard";
 import PostDetailModal from "../feed/PostDetailModal";
 import ProfileHeader from "./ProfileHeader";
@@ -45,7 +45,7 @@ function mapApiPostToCard(api) {
   return {
     id: api?.id ?? crypto.randomUUID?.() ?? Math.random(),
     userId: api?.userId ?? null,
-    postType: api?.postType ,
+    postType: api?.postType,
     name: api?.username ?? "Unknown",
     neighborhood: "",
     time: relativeTimeFromISO(api?.createdAt),
@@ -58,7 +58,7 @@ function mapApiPostToCard(api) {
   };
 }
 
-export default function ProfilePostsPage() {
+function ProfilePostsContent() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const loadMoreRef = useRef(null);
@@ -87,7 +87,6 @@ export default function ProfilePostsPage() {
     enabled: !!userId,
   });
 
-  
   // --- Log or handle errors ---
   useEffect(() => {
     if (isError) console.error("Error fetching user posts:", error);
@@ -217,11 +216,6 @@ export default function ProfilePostsPage() {
       </section>
 
       {/* Post Detail Modal */}
-      {/* <PostDetailModal
-        open={open}
-        onClose={() => setOpen(false)}
-        post={selected}
-      /> */}
       {open && selected && (
         <PostDetailModal
           open={open}
@@ -230,5 +224,61 @@ export default function ProfilePostsPage() {
         />
       )}
     </>
+  );
+}
+
+export default function ProfilePostsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-3">
+          {/* Profile Header Skeleton */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="h-20 w-20 rounded-full bg-slate-200" />
+              <div className="flex-1 space-y-3">
+                <div className="h-6 w-40 rounded bg-slate-200" />
+                <div className="h-4 w-32 rounded bg-slate-200" />
+              </div>
+            </div>
+          </div>
+
+          {/* Posts Skeleton */}
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl border border-slate-200 p-6 animate-pulse"
+            >
+              <div className="space-y-4">
+                {/* Header shimmer */}
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-full bg-slate-200" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-32 rounded bg-slate-200" />
+                    <div className="h-3 w-24 rounded bg-slate-200" />
+                  </div>
+                </div>
+                
+                {/* Content shimmer */}
+                <div className="space-y-2">
+                  <div className="h-4 w-full rounded bg-slate-200" />
+                  <div className="h-4 w-5/6 rounded bg-slate-200" />
+                  <div className="h-4 w-4/6 rounded bg-slate-200" />
+                </div>
+                
+                {/* Action buttons shimmer */}
+                <div className="flex items-center gap-6 pt-2">
+                  <div className="h-8 w-20 rounded bg-slate-200" />
+                  <div className="h-8 w-20 rounded bg-slate-200" />
+                  <div className="h-8 w-20 rounded bg-slate-200" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      }s
+    >
+      <ProfilePostsContent />
+    </Suspense>
   );
 }
