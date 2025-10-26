@@ -141,7 +141,6 @@ export default function MarketPage() {
   const [category, setCategory] = useState("All categories");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const currentUserId = null;
 
@@ -150,14 +149,14 @@ export default function MarketPage() {
     const run = async () => {
       try {
         setLoading(true);
-        setError(null);
         const apiCategory = category === "All categories" ? "" : category;
         const res = await getProductsByCategory(apiCategory);
         const rows = Array.isArray(res?.data) ? res.data : [];
         const mapped = rows.map(mapApiToListing);
         if (!ignore) setItems(mapped);
       } catch (e) {
-        if (!ignore) setError(e?.message || "Failed to load products");
+        // Silently handle error - will show "No items found" instead
+        if (!ignore) setItems([]);
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -224,21 +223,11 @@ export default function MarketPage() {
         </div>
       )}
 
-      {/* Error State */}
-      {error && (
-        <div className="bg-white rounded-2xl border border-red-200 p-8">
-          <div className="text-center text-red-600">
-            <p className="font-semibold">Failed to load products</p>
-            <p className="text-sm mt-1">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && !error && listings.length === 0 && (
+      {/* Empty/Not Found State */}
+      {!loading && listings.length === 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-12">
           <div className="text-center text-slate-500">
-            <p className="text-lg font-medium">No products found</p>
+            <p className="text-lg font-medium">No items found</p>
             <p className="text-sm mt-1">
               {category !== "All categories"
                 ? `Try selecting a different category`
@@ -249,7 +238,7 @@ export default function MarketPage() {
       )}
 
       {/* Products Grid */}
-      {!loading && !error && listings.length > 0 && (
+      {!loading && listings.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {listings.map((l) => (
             <MarketCard key={l.id} listing={l} />
