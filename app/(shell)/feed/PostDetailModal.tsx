@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { commentRepository } from "@/repositories/commentRepository";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentUser } from "@/hooks";
 
 type Post = {
   id: number;
@@ -128,7 +129,8 @@ export default function PostDetailModal({
 const queryClient = useQueryClient();
 // post
 console.log("Post in Modal:", post?.userId);
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+  // Cast the return value to a known shape so TypeScript recognizes `user`
+  const { user: userData } = useCurrentUser() as { user?: { profilePhotoUrl?: string } };
   const myAvatar: string | undefined = userData?.profilePhotoUrl;
 
   const mapApiToComment = (c: ApiComment): Comment => ({

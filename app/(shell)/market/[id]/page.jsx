@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { getProductById, markProductSold } from "@/repositories/MarketplaceRepository";
 import { conversationRepository } from "@/repositories/conversationRepository";
+import { useCurrentUser, useCarousel } from "@/hooks";
 
 export default function MarketItemPage({ params }) {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function MarketItemPage({ params }) {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageStatus, setMessageStatus] = useState(null);
 
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+  const { user: userData } = useCurrentUser();
 
   useEffect(() => {
     async function fetchProduct() {

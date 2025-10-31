@@ -33,7 +33,7 @@ function SignInForm() {
       const userProfile = await getUserProfile(email);
       console.log("✅ Fetched user profile:", userProfile);
 
-      if (userProfile.data.coverPhotoUrl && userProfile.data.profilePhotoUrl) {
+      if (userProfile.data.profilePhotoUrl) {
         router.replace(from || "/feed");
       } else {
         router.replace("/complete-profile");

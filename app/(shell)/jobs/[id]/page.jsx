@@ -12,6 +12,7 @@ import {
 import { getJobById, jobClosed } from "@/repositories/JobRepository";
 import { conversationRepository } from "@/repositories/conversationRepository";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks";
 
 function relativeTimeFromISO(iso) {
   if (!iso) return "";
@@ -74,7 +75,7 @@ export default function JobDetailPage({ params }) {
   const [message, setMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageStatus, setMessageStatus] = useState(null);
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
+  const { user: userData, userId } = useCurrentUser();
 
   const isOwner = userData && job && String(userData.id) === String(job.userId);
 
@@ -174,7 +175,7 @@ export default function JobDetailPage({ params }) {
   }
 
   return (
-    <section className="grid grid-cols-12 gap-4 p-8">
+    <section className="grid grid-cols-12 gap-4 p-1">
        <div className="col-span-12 mb-4">
           <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-700 hover:text-slate-900">
             <ChevronLeft size={20} />

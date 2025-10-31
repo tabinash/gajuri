@@ -4,41 +4,10 @@ import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import PostCard from "../feed/PostCard";
 import PostDetailModal from "../feed/PostDetailModal";
 import ProfileHeader from "./ProfileHeader";
-import { useSearchParams } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import postRepository from "@/repositories/PostRepository";
-
-// --- Utility: relative time ---
-function relativeTimeFromISO(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-  const units = [
-    ["year", 31536000],
-    ["month", 2592000],
-    ["week", 604800],
-    ["day", 86400],
-    ["hour", 3600],
-    ["min", 60],
-  ];
-  for (const [label, sec] of units) {
-    const v = Math.floor(diffSec / sec);
-    if (v >= 1) return `${v} ${label}${v > 1 ? "s" : ""} ago`;
-  }
-  return "just now";
-}
-
-// --- Normalize images array from API ---
-function normalizeImages(images) {
-  if (!Array.isArray(images)) return [];
-  return images
-    .map((img) =>
-      typeof img === "string"
-        ? { src: img, alt: "image" }
-        : { src: img?.url || img?.src || "", alt: img?.alt || "image" }
-    )
-    .filter((i) => i.src);
-}
+import { relativeTimeFromISO, normalizeImages } from "@/utils";
+import { useQueryParam } from "@/hooks";
 
 // --- Map API post to PostCard props ---
 function mapApiPostToCard(api) {
@@ -62,8 +31,7 @@ function ProfilePostsContent() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const loadMoreRef = useRef(null);
-  const searchParams = useSearchParams();
-  const userId = searchParams.get("userId");
+  const userId = useQueryParam("userId");
 
   // --- Infinite Query for user posts ---
   const {

@@ -5,38 +5,7 @@ import PostCard from "./PostCard";
 import PostDetailModal from "./PostDetailModal";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import postRepository from "@/repositories/PostRepository";
-
-// Relative time formatter
-function relativeTimeFromISO(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-  const units = [
-    ["year", 31536000],
-    ["month", 2592000],
-    ["week", 604800],
-    ["day", 86400],
-    ["hour", 3600],
-    ["min", 60],
-  ];
-  for (const [label, sec] of units) {
-    const v = Math.floor(diffSec / sec);
-    if (v >= 1) return `${v} ${label}${v > 1 ? "s" : ""} ago`;
-  }
-  return "just now";
-}
-
-// Normalize images array from API (strings or objects)
-function normalizeImages(images) {
-  if (!Array.isArray(images)) return [];
-  return images
-    .map((img) =>
-      typeof img === "string"
-        ? { src: img, alt: "image" }
-        : { src: img?.url || img?.src || "", alt: img?.alt || "image" }
-    )
-    .filter((i) => i.src);
-}
+import { relativeTimeFromISO, normalizeImages } from "@/utils";
 
 // Map API post -> PostCard props
 function mapApiPostToCard(api) {

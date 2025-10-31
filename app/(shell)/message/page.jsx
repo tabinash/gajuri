@@ -7,6 +7,7 @@ import { conversationRepository } from "@/repositories/conversationRepository";
 import { ThumbsUp, Send, Loader2 } from "lucide-react";
 import { BiLeftArrowAlt } from "react-icons/bi";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks";
 
 function Avatar({ src, name = "", size = "h-9 w-9" }) {
   const [imgError, setImgError] = useState(false);
@@ -46,10 +47,7 @@ function ChatThreadContent() {
   const [pendingKind, setPendingKind] = useState(null); // "text" | "like" | null
   const endRef = useRef(null);
 
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
-  const myId = userData?.id;
-  const myUsername = userData?.username || "Me";
-  const myAvatar = userData?.profilePicture || userData?.profilePhotoUrl;
+  const { user: userData, userId: myId, username: myUsername, avatar: myAvatar } = useCurrentUser();
 
   // Fetch messages (independent)
   const {

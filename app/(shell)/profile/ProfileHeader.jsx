@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getUserProfileById } from "@/repositories/UserRepository";
+import { useCurrentUser } from "@/hooks";
 
 function formatJoined(date) {
   if (!date) return undefined;
@@ -53,8 +54,8 @@ export default function ProfileHeader({ userId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
-  const isOwnProfile = Number(userData?.id) === Number(userId);
+  const { userId: currentUserId } = useCurrentUser();
+  const isOwnProfile = Number(currentUserId) === Number(userId);
 
   useEffect(() => {
     let ignore = false;

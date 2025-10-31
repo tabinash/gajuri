@@ -41,13 +41,14 @@ function normalizeImages(images) {
 // Map API post -> PostCard props
 function mapApiPostToCard(api) {
   return {
-    _id: api?.id ?? crypto.randomUUID?.() ?? Math.random(),
+    id: api?.id ?? crypto.randomUUID?.() ?? Math.random(),
+    userId: api?.userId ?? null,
     postType: api?.postType ,
     name: api?.username ?? "Unknown",
     neighborhood: "", // not provided by API
     time: relativeTimeFromISO(api?.createdAt),
     text: api?.content ?? "",
-    likes: 0, // not provided by API
+    likes: api?.viewCount ?? 0, // not provided by API
     comments: api?.commentCount ?? 0,
     avatar: api?.userProfilePicture ?? "",
     images: normalizeImages(api?.images),
@@ -161,9 +162,10 @@ export default function FeedPage() {
         {cards.map((p) => (
           <PostCard
           postType={p.postType}
-            key={p._id}
+            key={p.id}
+            postId={p.id}
             {...p}
-            id={p._id}
+            id={p.userId}
             onOpen={() => {
               setSelected(p);
               setOpen(true);
@@ -174,6 +176,7 @@ export default function FeedPage() {
             }}
           />
         ))}
+
 
         {isSuccess && cards.length === 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 p-12">

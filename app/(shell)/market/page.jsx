@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { getProductsByCategory } from "@/repositories/MarketplaceRepository";
+import { relativeTimeFromISO, formatPrice, firstImage, cityFromLocation } from "@/utils";
 
 // Category options
 const CATEGORIES = [
@@ -15,50 +16,6 @@ const CATEGORIES = [
   "FASHION",
   "BEAUTY",
 ];
-
-// Helpers
-function relativeTimeFromISO(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-  const units = [
-    ["year", 31536000],
-    ["month", 2592000],
-    ["week", 604800],
-    ["day", 86400],
-    ["hour", 3600],
-    ["min", 60],
-  ];
-  for (const [label, sec] of units) {
-    const v = Math.floor(diffSec / sec);
-    if (v >= 1) return `${v} ${label}${v > 1 ? "s" : ""} ago`;
-  }
-  return "just now";
-}
-
-function formatPrice(n) {
-  if (!n || n <= 0) return "FREE";
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: "NPR",
-      maximumFractionDigits: 0,
-    }).format(n);
-  } catch {
-    return `Rs ${n}`;
-  }
-}
-
-function firstImage(arr) {
-  const src = Array.isArray(arr) && arr.length > 0 ? arr[0] : "";
-  return src || "https://via.placeholder.com/400x300/EEE/94A3B8?text=Item";
-}
-
-function cityFromLocation(loc) {
-  if (!loc) return "";
-  return loc.split(",")[0]?.trim() || "";
-}
 
 function mapApiToListing(p) {
   return {

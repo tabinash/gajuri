@@ -27,12 +27,42 @@ export default function RootLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // If this is a mobile route (/m/*), skip all desktop checks
+    // Mobile layout will handle its own auth and redirects
+    if (pathname.startsWith('/m')) {
+      return;
+    }
+
+    // Mobile redirect logic
+    // TODO: When deploying to production, update this to redirect to m.gajuri.com
+    const checkMobileAndRedirect = () => {
+      // Check if screen is mobile size (width < 768px)
+      const isMobileScreen = window.innerWidth < 768;
+
+      if (isMobileScreen && !pathname.startsWith('/m')) {
+        // For localhost: redirect to /m path
+        router.push(`/m${pathname}`);
+
+        // For production, uncomment this instead:
+        // const currentUrl = new URL(window.location.href);
+        // currentUrl.hostname = `m.${currentUrl.hostname}`;
+        // window.location.href = currentUrl.toString();
+      }
+    };
+
+    // Run check on mount
+    checkMobileAndRedirect();
+
+    // Also check on window resize
+    const handleResize = () => checkMobileAndRedirect();
+    window.addEventListener('resize', handleResize);
+
     // Check if current route is public
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
     // If it's a public route, no need to check auth
     if (isPublicRoute) {
-      return;
+      return () => window.removeEventListener('resize', handleResize);
     }
 
     // Check authentication keys in localStorage
@@ -43,6 +73,9 @@ export default function RootLayout({
     if (!authToken || !userProfile) {
       router.push("/login");
     }
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
   }, [pathname, router]);
 
   return (

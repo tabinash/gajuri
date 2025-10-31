@@ -70,6 +70,13 @@ export const postRepository = {
     );
     return response;
   },
+
+  getPostById: async (postId) => {
+    if (!postId) throw new Error("Post ID is required");
+    const response = await httpClient.get(`/posts/${postId}`);
+    console.log(`Post ${postId} details:`, response.data);
+    return response;
+  },
 };
 
 export default postRepository;

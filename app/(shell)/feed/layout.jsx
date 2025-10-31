@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Image, X, ChevronDown, Loader2, CheckCircle, Globe } from "lucide-react";
 import postRepository from "@/repositories/PostRepository";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentUser, useClickOutside } from "@/hooks";
 
 export default function FeedLayout({ children }) {
   const pathname = usePathname();
@@ -23,15 +24,14 @@ export default function FeedLayout({ children }) {
   const [postError, setPostError] = useState(null);
 
   const textareaRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useClickOutside(() => setShowTypeDropdown(false));
   const fileInputRef = useRef(null);
 
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
-  const userAvatar = userData?.profilePhotoUrl || userData?.profilePicture;
-  const username = userData?.username || "User";
-  const firstName = username.split(" ")[0];
+  const { user, avatar, username } = useCurrentUser();
+  const userAvatar = avatar;
+  const firstName = (username || "User").split(" ")[0];
 
-  const POST_TYPES = userData?.institutionalUser
+  const POST_TYPES = user?.institutionalUser
     ? [
         { value: "GENERAL", label: "General", icon: Globe, color: "text-slate-600", bgColor: "bg-slate-50", hoverColor: "hover:bg-slate-100" },
         { value: "NEWS", label: "News", icon: Globe, color: "text-blue-600", bgColor: "bg-blue-50", hoverColor: "hover:bg-blue-100" },
@@ -52,17 +52,6 @@ export default function FeedLayout({ children }) {
       textareaRef.current.focus();
     }
   }, [isExpanded]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowTypeDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     return () => {

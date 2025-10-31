@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, ArrowLeft, Check, X, Loader2 } from "lucide-react";
 import { updateBio, updateCoverProfile, updateProfileImage } from "@/repositories/UserRepository";
+import { useCurrentUser } from "@/hooks";
+import { storage } from "@/utils";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -27,22 +29,16 @@ export default function EditProfilePage() {
   const [profileFile, setProfileFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
 
-  // Get user ID from localStorage
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
-  const userId = userData?.id;
+  // Get user ID from hook
+  const { userId } = useCurrentUser();
 
   // Load saved data from localStorage
   useEffect(() => {
-    const savedData = localStorage.getItem("chemiki-editProfileData");
+    const savedData = storage.get("chemiki-editProfileData");
     if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        setFormData(parsed);
-        setProfilePreview(parsed.profilePhotoUrl || "");
-        setCoverPreview(parsed.coverPhotoUrl || "");
-      } catch (error) {
-        console.error("Failed to parse profile data:", error);
-      }
+      setFormData(savedData);
+      setProfilePreview(savedData.profilePhotoUrl || "");
+      setCoverPreview(savedData.coverPhotoUrl || "");
     }
   }, []);
 

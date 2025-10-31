@@ -61,17 +61,14 @@ export default function ChatList({
         c.lastMessage.toLowerCase().includes(t)
     );
   }, [q, conversations]);
-  console.log("Filtered Conversations:", filtered);
 
   return (
     <div className="flex h-full w-full flex-col bg-transparent p-3">
-      {/* Card container */}
       <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#E4E6EB] bg-white shadow-sm">
         {/* Header */}
         <div className="sticky top-0 z-10 space-y-3 border-b border-[#E4E6EB] bg-white/95 p-4 backdrop-blur">
           <div className="flex items-center justify-between">
             <h2 className="text-[22px] font-semibold text-slate-900">Chats</h2>
-            
           </div>
 
           <div className="flex items-center rounded-full bg-[#F0F2F5] px-3 ring-1 ring-transparent focus-within:ring-[#E4E6EB]">
@@ -101,6 +98,8 @@ export default function ChatList({
             <ul className="space-y-1">
               {filtered.map((c) => {
                 const isActive = String(c.otherUserId) === selectedUserId;
+                const hasUnread = c.hasUnreadMessages;
+
                 return (
                   <li key={c.otherUserId}>
                     <button
@@ -108,22 +107,41 @@ export default function ChatList({
                       aria-current={isActive ? "page" : undefined}
                       className={[
                         "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors text-left",
-                        isActive ? "bg-[#E4E6EB]" : "hover:bg-slate-50",
+                        isActive
+                          ? "bg-[#E4E6EB]"
+                          : hasUnread
+                          ? "bg-blue-50 hover:bg-blue-100"
+                          : "hover:bg-slate-50",
                       ].join(" ")}
                     >
                       <Avatar name={c.otherUsername} src={c.profilePicture} />
 
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-base font-medium text-slate-900">
+                        <div
+                          className={`truncate text-base ${
+                            hasUnread
+                              ? "font-bold text-slate-900"
+                              : "font-medium text-slate-900"
+                          }`}
+                        >
                           {c.otherUsername}
                         </div>
-                        <div className="mt-0.5 flex items-center gap-1 truncate text-sm text-slate-500">
+                        <div
+                          className={`mt-0.5 flex items-center gap-1 truncate text-sm ${
+                            hasUnread ? "text-slate-800 font-semibold" : "text-slate-500"
+                          }`}
+                        >
                           <span className="truncate">{c.lastMessage}</span>
-                          <span className="shrink-0">· {formatTimestamp(c.lastMessageTime)}</span>
+                          <span className="shrink-0">
+                            · {formatTimestamp(c.lastMessageTime)}
+                          </span>
                         </div>
                       </div>
 
-                      
+                      {/* Blue unread indicator dot */}
+                      {hasUnread && (
+                        <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#1B74E4]" />
+                      )}
                     </button>
                   </li>
                 );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Globe2,
   Eye,
@@ -14,6 +14,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import postRepository from "@/repositories/PostRepository";
 import { useQueryClient } from "@tanstack/react-query";
+import { useClickOutside, useCarousel, useCurrentUser } from "@/hooks";
 
 export default function PostCard({
   id,
@@ -30,29 +31,14 @@ export default function PostCard({
   onOpen,
   onComment,
 }) {
-  const [index, setIndex] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
   const count = images.length;
+  const { index, prev, next } = useCarousel(count);
+  const menuRef = useClickOutside(() => setShowMenu(false));
+  const { userId } = useCurrentUser();
   const pathname = usePathname();
-  const menuRef = useRef(null);
   const queryClient = useQueryClient();
   console.log("PostCard render:", { id, postType, name });
-
-  const prev = () => setIndex((i) => (i - 1 + count) % count);
-  const next = () => setIndex((i) => (i + 1) % count);
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
-  const userId = userData?.id;
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleDelete = async () => {
     await postRepository.deletePost(postId);

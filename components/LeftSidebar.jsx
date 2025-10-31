@@ -4,7 +4,7 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import {
   Home,
   ShoppingBag,
@@ -15,16 +15,13 @@ import {
   LogOut,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
- 
+import { useClickOutside, useCurrentUser } from "@/hooks";
+import { useQuery } from "@tanstack/react-query";
+import { conversationRepository } from "@/repositories/conversationRepository";
+
 export const SIDEBAR_WIDTH = 264;
 
-type Item = {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-};
-
-const items: Item[] = [
+const items = [
   { label: "Home", href: "/feed", icon: Home },
   { label: "Explore", href: "/explore", icon: Compass },
   { label: "Market Place", href: "/market", icon: ShoppingBag },
@@ -36,37 +33,43 @@ export default function LeftSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  
+  const menuRef = useClickOutside(() => setShowProfileMenu(false));
+  const currentUser = useCurrentUser() || {};
+  const { user, userId, username, avatar } = currentUser;
+
+  // Fetch conversations (same as MobileHeader)
+  const { data: conversations = [] } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: async () => {
+      const response = await conversationRepository.getConversations();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return [];
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 1000 * 60 * 2, // Poll every 2 minutes
+    refetchOnWindowFocus: true,
+    retry: 3,
+  });
+
+  // Updated: Calculate total unread messages
+  const unreadCount = conversations.reduce((total, conv) => {
+    return total + (conv.unreadCount || 0);
+  }, 0);
+
   const fontStack =
     '"Inter", "Segoe UI", SegoeUI, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"';
-  
-  const userData = JSON.parse(localStorage.getItem("chemiki-userProfile") || "null");
-  
+
   const profile = {
-    id: userData?.id,
-    name: userData?.username,
-    avatar: userData?.profilePhotoUrl,
+    id: userId,
+    name: username,
+    avatar: avatar,
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowProfileMenu(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const handleLogout = () => {
-    // Clear user data from localStorage - remove both keys
     localStorage.removeItem("gajuri-authToken");
     localStorage.removeItem("chemiki-userProfile");
-    
-    // Redirect to login page
     router.push("/login");
   };
 
@@ -106,16 +109,22 @@ export default function LeftSidebar() {
           </div>
 
           {/* Nav */}
-          <nav className="p-4 px-6  flex-1 overflow-y-auto">
+          <nav className="p-4 px-6 flex-1 overflow-y-auto">
             <ul className="space-y-3">
               {items.map(({ label, href, icon: Icon }) => {
                 const active =
-                  pathname === href || (href !== "/feed" && pathname?.startsWith(href));
+                  pathname === href ||
+                  (href !== "/feed" && pathname?.startsWith(href));
 
                 const linkHref =
-                  href === "/market" || href === "/messages" || href === "/jobs"
+                  href === "/market" ||
+                  href === "/messages" ||
+                  href === "/jobs"
                     ? { pathname: href, query: { hide: "true" } }
                     : href;
+
+                const isMessages = href === "/messages";
+                const showBadge = isMessages && unreadCount > 0;
 
                 return (
                   <li key={href}>
@@ -123,16 +132,23 @@ export default function LeftSidebar() {
                       href={linkHref}
                       aria-current={active ? "page" : undefined}
                       className={[
-                        "flex items-center gap-3 rounded-md px-3 py-2 text-[18px] transition-colors",
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-[18px] transition-colors relative",
                         active
                           ? "font-semibold text-slate-900"
                           : "text-slate-800 hover:bg-slate-50",
                       ].join(" ")}
                     >
-                      <Icon
-                        size={24}
-                        className={active ? "text-slate-900" : "text-slate-800"}
-                      />
+                      <div className="relative">
+                        <Icon
+                          size={24}
+                          className={active ? "text-slate-900" : "text-slate-800"}
+                        />
+                        {showBadge && (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </div>
                       <span className="tracking-tight">{label}</span>
                     </Link>
                   </li>
@@ -149,8 +165,8 @@ export default function LeftSidebar() {
                 className="w-full flex items-center gap-3 rounded-md px-3 py-2 hover:bg-slate-50 transition-colors"
               >
                 <img
-                  src={profile.avatar}
-                  alt={`${profile.name} avatar`}
+                  src={profile.avatar ?? undefined}
+                  alt={`${profile.name ?? "User"} avatar`}
                   className="h-9 w-9 rounded-full object-cover"
                 />
                 <div className="min-w-0 flex-1 text-left">
@@ -161,7 +177,6 @@ export default function LeftSidebar() {
                 </div>
               </button>
 
-              {/* Dropdown Menu */}
               {showProfileMenu && (
                 <div className="absolute bottom-full left-6 right-6 mb-2 rounded-lg border border-slate-200 bg-white shadow-lg z-50 py-1">
                   <Link
