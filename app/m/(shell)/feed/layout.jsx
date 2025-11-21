@@ -180,7 +180,7 @@ export default function FeedLayout({ children }) {
   return (
     <div>
       {/* Post Creation Card */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-white border-b border-slate-200 ">
         <div className="p-4">
           {!isExpanded ? (
             <div className="flex items-center gap-3">
@@ -188,9 +188,7 @@ export default function FeedLayout({ children }) {
                 src={userAvatar || "https://via.placeholder.com/40"}
                 alt={username}
                 className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-100"
-                onError={(e) => {
-                  e.currentTarget.src = "https://via.placeholder.com/40/EEE/94A3B8?text=U";
-                }}
+
               />
 
               <button
@@ -208,9 +206,7 @@ export default function FeedLayout({ children }) {
                     src={userAvatar || "https://via.placeholder.com/40"}
                     alt={username}
                     className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-100"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://via.placeholder.com/40/EEE/94A3B8?text=U";
-                    }}
+
                   />
                   <div>
                     <p className="font-semibold text-slate-900">{username}</p>

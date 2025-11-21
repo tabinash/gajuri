@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { getProductById, markProductSold } from "@/repositories/MarketplaceRepository";
 import { conversationRepository } from "@/repositories/conversationRepository";
-import { useCurrentUser } from "@/hooks";
+import { useCurrentUser, useImageViewer } from "@/hooks";
+import ImageViewer from "@/components-mobile/ImageViewer";
 
 export default function MarketItemPage({ params }) {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function MarketItemPage({ params }) {
   const [messageStatus, setMessageStatus] = useState(null);
 
   const { user: userData, userId } = useCurrentUser();
+  const imageViewer = useImageViewer();
 
   useEffect(() => {
     async function fetchProduct() {
@@ -227,7 +229,13 @@ export default function MarketItemPage({ params }) {
           <div className="flex h-full w-full transition-transform duration-300 ease-out" style={{ transform: `translateX(-${idx * 100}%)` }}>
             {item.images.map((img, i) => (
               <div key={i} className="flex h-full w-full shrink-0 items-center justify-center">
-                <img src={img.src} alt={img.alt} className="max-h-80 w-full object-contain" draggable={false} />
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  className="max-h-80 w-full object-contain cursor-pointer"
+                  draggable={false}
+                  onClick={() => imageViewer.open(item.images, i)}
+                />
               </div>
             ))}
           </div>
@@ -339,6 +347,17 @@ export default function MarketItemPage({ params }) {
           </div>
         )}
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      <ImageViewer
+        isOpen={imageViewer.isOpen}
+        images={imageViewer.images}
+        currentIndex={imageViewer.currentIndex}
+        onClose={imageViewer.close}
+        onNext={imageViewer.next}
+        onPrev={imageViewer.prev}
+        onGoTo={imageViewer.goTo}
+      />
     </div>
   );
 }

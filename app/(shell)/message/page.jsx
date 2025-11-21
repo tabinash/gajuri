@@ -72,7 +72,7 @@ function ChatThreadContent() {
   const other = (() => {
     const first = messages[0];
     if (!first) return { username: "Conversation", avatar: undefined };
-    const amISender = first.senderId === myId;
+    const amISender = first.receiverId === myId;
     return amISender
       ? { username: first.receiverUsername, avatar: first.receiverProfilePicture }
       : { username: first.senderUsername, avatar: first.senderProfilePicture };
@@ -200,7 +200,7 @@ function ChatThreadContent() {
                     {!isMe && (
                       <div className="self-end">
                         {showAvatar ? (
-                          <Avatar src={m.senderProfilePicture || other.avatar} name={m.senderUsername} size="h-7 w-7" />
+                          <Avatar src={ other.avatar} name={m.senderUsername} size="h-7 w-7" />
                         ) : (
                           <span className="inline-block h-7 w-7" />
                         )}

@@ -47,7 +47,7 @@ function ChatThreadContent() {
   const inputRef = useRef(null);
 
   const { userId: myId, username: myUsername, avatar: myAvatar } = useCurrentUser();
-
+console.log("My ID:", myId);
   // Fetch messages
   const {
     data: messages = [],
@@ -57,6 +57,7 @@ function ChatThreadContent() {
     queryFn: async () => {
       const response = await conversationRepository.getConversationById(Number(userId));
       if (response?.success && response?.data) {
+        console.log("Fetched messages:", response.data);
         return [...response.data].sort((a, b) => a.id - b.id);
       }
       return [];
@@ -70,12 +71,14 @@ function ChatThreadContent() {
   // Get other user info
   const other = (() => {
     const first = messages[0];
+    console.log("First message:", first);
     if (!first) return { username: "User", avatar: undefined };
-    const amISender = first.senderId === myId;
+    const amISender = first.receiverId === myId;
     return amISender
       ? { username: first.receiverUsername, avatar: first.receiverProfilePicture }
       : { username: first.senderUsername, avatar: first.senderProfilePicture };
   })();
+  console.log("Other user:", other);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData) => {
@@ -177,7 +180,7 @@ function ChatThreadContent() {
       </div>
 
       {/* Messages - Optimized scroll area */}
-      <div className="flex-1 overflow-y-auto bg-slate-50 px-4 py-3">
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-slate-50 px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
@@ -188,7 +191,7 @@ function ChatThreadContent() {
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div>
             {messages.map((m, idx) => {
               const isMe = myId != null && m.senderId === myId;
               const prevMsg = idx > 0 ? messages[idx - 1] : null;
@@ -198,31 +201,31 @@ function ChatThreadContent() {
               return (
                 <div
                   key={m.id}
-                  className={`flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`}
+                  className={`mt-3 flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`}
                 >
                   {!isMe && (
                     <div className="self-end">
                       {showAvatar ? (
-                        <Avatar src={m.senderProfilePicture || other.avatar} name={m.senderUsername} size="h-8 w-8" />
+                        <Avatar src={ other.avatar} name={m.senderUsername} size="h-7 w-7" />
                       ) : (
-                        <div className="h-8 w-8" />
+                        <div className="h-7 w-7" />
                       )}
                     </div>
                   )}
 
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                    className={`max-w-[83%] rounded-2xl px-4 py-2 text-sm leading-relaxed shadow-sm ${
                       isMe ? "text-white" : "text-slate-900"
                     } ${isPending ? "opacity-70" : ""}`}
                     style={{
                       backgroundColor: isMe ? "#1B74E4" : "#EFF2F5",
-                      borderTopLeftRadius: isMe ? 16 : 4,
-                      borderTopRightRadius: isMe ? 4 : 16,
+                      borderTopLeftRadius: isMe ? 16 : 6,
+                      borderTopRightRadius: isMe ? 6 : 16,
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
                     }}
                   >
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                      {m.content}
-                    </p>
+                    <div>{m.content}</div>
                     {isMe && isPending && (
                       <div className="mt-1 flex justify-end">
                         <Loader2 size={14} className="animate-spin opacity-80" />
@@ -276,7 +279,7 @@ function ChatThreadContent() {
             <button
               onClick={onLike}
               disabled={sendMessageMutation.isPending}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-700 active:bg-slate-200 disabled:opacity-60"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#1B74E4] text-white shadow-sm active:brightness-95 disabled:opacity-60"
               aria-label="Send like"
             >
               {pendingKind === "like" && sendMessageMutation.isPending ? (

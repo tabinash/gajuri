@@ -10,6 +10,7 @@ import {
   Send,
   Loader2,
   Globe2,
+  Trash2,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { commentRepository } from "@/repositories/commentRepository";
@@ -83,9 +84,11 @@ export default function PostDetailPage() {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [sending, setSending] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState(null);
 
   const { user: userData } = useCurrentUser();
   const myAvatar = userData?.profilePhotoUrl;
+  const myUserId = userData?.id;
 
   // Load post from localStorage
   useEffect(() => {
@@ -115,6 +118,7 @@ export default function PostDetailPage() {
           avatar: c.userProfilePicture,
           text: c.content,
           time: c.timeAgo || "",
+          userId: c.userId,
         }))
       );
     } catch (error) {
@@ -145,6 +149,27 @@ export default function PostDetailPage() {
       console.error("Failed to add comment:", err);
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm("Delete this comment?")) return;
+    if (!post?.id) {
+      console.error("Cannot delete comment: post id is missing");
+      return;
+    }
+    try {
+      setDeletingCommentId(commentId);
+      await commentRepository.deleteComment(commentId, post.id);
+      await loadComments();
+      queryClient.invalidateQueries({ queryKey: ["posts", "general"] });
+      if (post?.userId) {
+        queryClient.invalidateQueries({ queryKey: ["posts", "user", post.userId] });
+      }
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+    } finally {
+      setDeletingCommentId(null);
     }
   };
 
@@ -360,29 +385,51 @@ export default function PostDetailPage() {
                 No comments yet. Be the first to comment!
               </div>
             ) : (
-              comments.map((comment) => (
-                <div key={comment.id} className="flex gap-2.5">
-                  <img
-                    src={comment.avatar}
-                    alt={`${comment.author} avatar`}
-                    className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://via.placeholder.com/80/EEE/94A3B8?text=U";
-                    }}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="rounded-2xl bg-slate-50 px-3 py-2">
-                      <div className="text-sm font-semibold text-slate-900">
-                        {comment.author}
+              comments.map((comment) => {
+                const isMyComment = myUserId !== undefined && comment.userId === myUserId;
+                const isDeleting = deletingCommentId === comment.id;
+
+                return (
+                  <div key={comment.id} className="flex gap-2.5 group">
+                    <img
+                      src={comment.avatar}
+                      alt={`${comment.author} avatar`}
+                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/80/EEE/94A3B8?text=U";
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="rounded-2xl bg-slate-50 px-3 py-2 relative">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="text-sm font-semibold text-slate-900">
+                            {comment.author}
+                          </div>
+                          {isMyComment && (
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              disabled={isDeleting}
+                              className="  transition-opacity p-1 rounded-full hover:bg-red-50 text-red-600 disabled:opacity-50"
+                              aria-label="Delete comment"
+                              title="Delete"
+                            >
+                              {isDeleting ? (
+                                <Loader2 size={15} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={15} />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-800">
+                          {comment.text}
+                        </p>
                       </div>
-                      <p className="mt-1 text-sm leading-relaxed text-slate-800">
-                        {comment.text}
-                      </p>
+                      <div className="mt-1 px-3 text-xs text-slate-500">{comment.time}</div>
                     </div>
-                    <div className="mt-1 px-3 text-xs text-slate-500">{comment.time}</div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

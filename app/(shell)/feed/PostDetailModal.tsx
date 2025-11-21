@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Send,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { commentRepository } from "@/repositories/commentRepository";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,7 @@ type Comment = {
   avatar: string;
   text: string;
   time: string;
+  userId: number; // Add userId to check ownership
 };
 
 // API comment shape (from your response.data)
@@ -126,12 +128,16 @@ export default function PostDetailModal({
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [sending, setSending] = useState(false);
-const queryClient = useQueryClient();
-// post
-console.log("Post in Modal:", post?.userId);
-  // Cast the return value to a known shape so TypeScript recognizes `user`
-  const { user: userData } = useCurrentUser() as { user?: { profilePhotoUrl?: string } };
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+
+  const queryClient = useQueryClient();
+
+  // Get current user data including userId
+  const { user: userData } = useCurrentUser() as {
+    user?: { profilePhotoUrl?: string; id?: number };
+  };
   const myAvatar: string | undefined = userData?.profilePhotoUrl;
+  const myUserId: number | undefined = userData?.id;
 
   const mapApiToComment = (c: ApiComment): Comment => ({
     id: c.id,
@@ -139,6 +145,7 @@ console.log("Post in Modal:", post?.userId);
     avatar: c.userProfilePicture,
     text: c.content,
     time: c.timeAgo || "",
+    userId: c.userId,
   });
 
   const loadComments = async () => {
@@ -164,15 +171,29 @@ console.log("Post in Modal:", post?.userId);
       await commentRepository.addComment({ postId: post.id, content });
       setCommentText("");
       await loadComments();
-        // This invalidates the posts query so it refetches
-    queryClient.invalidateQueries({ queryKey: ["posts", "user", post?.userId] });
-          queryClient.invalidateQueries({ queryKey: ["posts", "general"] });
-
-
+      // Invalidate queries to refresh counts
+      queryClient.invalidateQueries({ queryKey: ["posts", "user", post?.userId] });
+      queryClient.invalidateQueries({ queryKey: ["posts", "general"] });
     } catch (err) {
       console.error("Failed to add comment:", err);
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!confirm("Delete this comment?")) return;
+    try {
+      setDeletingCommentId(commentId);
+      await commentRepository.deleteComment(commentId, post!.id);
+      await loadComments();
+      // Invalidate queries to refresh counts
+      queryClient.invalidateQueries({ queryKey: ["posts", "user", post?.userId] });
+      queryClient.invalidateQueries({ queryKey: ["posts", "general"] });
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+    } finally {
+      setDeletingCommentId(null);
     }
   };
 
@@ -333,32 +354,54 @@ console.log("Post in Modal:", post?.userId);
                     ) : comments.length === 0 ? (
                       <div className="text-base text-slate-500">No comments yet.</div>
                     ) : (
-                      comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-2.5">
-                          <img
-                            src={comment.avatar}
-                            alt={`${comment.author} avatar`}
-                            className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src =
-                                "https://via.placeholder.com/80/EEE/94A3B8?text=U";
-                            }}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="rounded-2xl bg-slate-50 px-3 py-2">
-                              <div className="text-base font-semibold text-slate-900">
-                                {comment.author}
+                      comments.map((comment) => {
+                        const isMyComment = myUserId !== undefined && comment.userId === myUserId;
+                        const isDeleting = deletingCommentId === comment.id;
+
+                        return (
+                          <div key={comment.id} className="flex gap-2.5 group">
+                            <img
+                              src={comment.avatar}
+                              alt={`${comment.author} avatar`}
+                              className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src =
+                                  "https://via.placeholder.com/80/EEE/94A3B8?text=U";
+                              }}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="rounded-2xl bg-slate-50 px-3 py-2 relative">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="text-base font-semibold text-slate-900">
+                                    {comment.author}
+                                  </div>
+                                  {isMyComment && (
+                                    <button
+                                      onClick={() => handleDeleteComment(comment.id)}
+                                      disabled={isDeleting}
+                                      className="opacity-100  transition-opacity p-1 rounded-full hover:bg-red-50 text-red-600 disabled:opacity-50"
+                                      aria-label="Delete comment"
+                                      title="Delete"
+                                    >
+                                      {isDeleting ? (
+                                        <Loader2 size={14} className="animate-spin" />
+                                      ) : (
+                                        <Trash2 size={14} />
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-base leading-relaxed text-slate-800">
+                                  {comment.text}
+                                </p>
                               </div>
-                              <p className="mt-1 text-base leading-relaxed text-slate-800">
-                                {comment.text}
-                              </p>
-                            </div>
-                            <div className="mt-1 px-3 text-sm text-slate-500">
-                              {comment.time}
+                              <div className="mt-1 px-3 text-sm text-slate-500">
+                                {comment.time}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>

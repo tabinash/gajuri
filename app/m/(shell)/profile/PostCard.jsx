@@ -13,7 +13,21 @@ import {
 import Link from "next/link";
 import postRepository from "@/repositories/PostRepository";
 import { useQueryClient } from "@tanstack/react-query";
-import { useClickOutside, useCarousel, useCurrentUser } from "@/hooks";
+import { useClickOutside, useCarousel, useCurrentUser, useImageViewer } from "@/hooks";
+import ImageViewer from "@/components-mobile/ImageViewer";
+
+const getPostTypePrefix = (type) => {
+  switch (type) {
+    case "LOST_AND_FOUND":
+      return { label: "🔍 Lost & Found", style: "text-amber-700" };
+    case "ALERT":
+      return { label: "⚠️ Alert", style: "text-red-600" };
+    case "NOTICE":
+      return { label: "📢 Notice", style: "text-blue-600" };
+    default:
+      return null;
+  }
+};
 
 export default function PostCard({
   id,
@@ -36,6 +50,8 @@ export default function PostCard({
   const menuRef = useClickOutside(() => setShowMenu(false));
   const { userId } = useCurrentUser();
   const queryClient = useQueryClient();
+  const imageViewer = useImageViewer();
+  const postTypePrefix = getPostTypePrefix(postType);
 
   const handleDelete = async () => {
     await postRepository.deletePost(postId);
@@ -79,23 +95,6 @@ export default function PostCard({
             </div>
           </Link>
 
-          {postType !== "GENERAL" && (
-            <span
-              className={[
-                "ml-2 rounded-full px-2.5 py-0.5 text-sm font-medium",
-                postType === "LOST_AND_FOUND"
-                  ? "bg-amber-50 text-amber-700 border border-amber-200"
-                  : postType === "ALERT"
-                  ? "bg-red-50 text-red-700 border border-red-200"
-                  : postType === "NOTICE"
-                  ? "bg-blue-50 text-blue-700 border border-blue-200"
-                  : "",
-              ].join(" ")}
-            >
-              {postType.replaceAll("_", " ")}
-            </span>
-          )}
-
           {userId === id && (
             <div className="relative" ref={menuRef}>
               <button
@@ -124,6 +123,12 @@ export default function PostCard({
 
         {/* Body */}
         <p className="mt-3 whitespace-pre-wrap text-base leading-normal text-slate-800">
+          {postTypePrefix && (
+            <span className={`font-semibold  ${postTypePrefix.style}`}>
+              {postTypePrefix.label} {" "}
+              <br/>
+            </span>
+          )}
           {text.length > 200 ? `${text.slice(0, 200)}...` : text}{" "}
           {text.length > 200 && (
             <span className="text-blue-600 cursor-pointer" onClick={onOpen}>
@@ -146,6 +151,7 @@ export default function PostCard({
                   alt={img.alt ?? `post image ${i + 1}`}
                   className="h-[280px] w-full shrink-0 object-cover"
                   draggable={false}
+                  onClick={() => imageViewer.open(images, i)}
                 />
               ))}
             </div>
@@ -207,6 +213,17 @@ export default function PostCard({
           </button>
         </div>
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      <ImageViewer
+        isOpen={imageViewer.isOpen}
+        images={imageViewer.images}
+        currentIndex={imageViewer.currentIndex}
+        onClose={imageViewer.close}
+        onNext={imageViewer.next}
+        onPrev={imageViewer.prev}
+        onGoTo={imageViewer.goTo}
+      />
     </article>
   );
 }

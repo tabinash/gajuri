@@ -7,3 +7,4 @@ export { useCarousel } from "./useCarousel";
 export { useTextExpander } from "./useTextExpander";
 export { useCurrentUser } from "./useCurrentUser";
 export { useQueryParam, useQueryParams } from "./useQueryParam";
+export { useImageViewer } from "./useImageViewer";

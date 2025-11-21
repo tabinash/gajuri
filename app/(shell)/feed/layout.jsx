@@ -169,9 +169,7 @@ export default function FeedLayout({ children }) {
                 src={userAvatar || "https://via.placeholder.com/40"}
                 alt={username}
                 className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-100"
-                onError={(e) => {
-                  e.currentTarget.src = "https://via.placeholder.com/40/EEE/94A3B8?text=U";
-                }}
+
               />
 
               <button
@@ -189,9 +187,7 @@ export default function FeedLayout({ children }) {
                     src={userAvatar || "https://via.placeholder.com/40"}
                     alt={username}
                     className="h-11 w-11 rounded-full object-cover ring-2 ring-slate-100"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://via.placeholder.com/40/EEE/94A3B8?text=U";
-                    }}
+
                   />
                   <div>
                     <p className="font-semibold text-slate-900">{username}</p>

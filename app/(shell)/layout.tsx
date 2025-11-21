@@ -1,9 +1,16 @@
 "use client";
 
-import React, { Suspense, useState, useEffect } from "react";
+import React, { Suspense } from "react";
 import LeftSidebar from "@/components/LeftSidebar";
 import RightSidebar from "@/components/RightSidebar";
 import { usePathname, useSearchParams } from "next/navigation";
+
+/**
+ * Responsive Layout (max-width: 1200px):
+ * - 640-768px:  Icon-only left sidebar (72px), main content, no right sidebar
+ * - 768-1024px: Full left sidebar (220px), main content, compact right sidebar (200px)
+ * - 1024px+:    Full left sidebar (220px), main content, full right sidebar (300px)
+ */
 
 function ShellLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,58 +20,31 @@ function ShellLayoutContent({ children }: { children: React.ReactNode }) {
   const isMessagesPage =
     pathname === "/messages" || pathname.startsWith("/messages/");
 
-  // Track window width
-  const [windowWidth, setWindowWidth] = useState<number>(0);
-  useEffect(() => {
-    setWindowWidth(window.innerWidth);
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Left sidebar width based on screen size
-  const leftSidebarWidth = windowWidth >= 768 ? 200 : 80; // 768px = tablet
-  const mainContentPL = leftSidebarWidth + 60; // 60px gap
-
-  // Show right sidebar only on large screens
-  const showRightSidebar = !hide && !isMessagesPage && windowWidth >= 1024; // >=1024px
-
-  // Main content span (grid)
-  const mainContentColSpan = showRightSidebar ? "col-span-9" : "col-span-13";
+  const hideRightSidebar = hide || isMessagesPage;
 
   return (
-    <div className={`min-h-dvh ${hide ? "max-w-7xl" : "max-w-6xl"} mx-auto`}>
-      {/* Left Sidebar */}
-      <aside
-        className={`fixed left-0 top-14 z-30 h-[calc(100dvh-56px)] border-r border-gray-200 bg-white`}
-        style={{ width: `${leftSidebarWidth}px` }}
-      >
-        <div className="h-full overflow-y-auto">
+    <div className="min-h-dvh w-full max-w-[1200px]">
+      <div className="flex">
+        {/* Left Sidebar */}
+        <aside className="sticky top-0 h-dvh shrink-0  bg-white w-[72px] md:w-[220px]">
           <LeftSidebar />
-        </div>
-      </aside>
+        </aside>
 
-      {/* Main content */}
-      <div style={{ paddingLeft: `${mainContentPL}px` }}>
-        <div className={`w-full ${isMessagesPage ? "ml-2" : "px-8 py-4"}`}>
-          <div
-            className={`grid ${
-              isMessagesPage ? "grid-cols-1 gap-0" : "grid-cols-13 gap-4"
-            }`}
-          >
-            {/* Main content */}
-            <main className={`min-w-0 ${mainContentColSpan}`}>{children}</main>
-
-            {/* Right Sidebar */}
-            {showRightSidebar && (
-              <aside className="col-span-4">
-                <div className="h-[calc(100dvh-56px)] w-[280px] space-y-4">
-                  <RightSidebar />
-                </div>
-              </aside>
-            )}
+        {/* Main Content */}
+        <main className="flex-1 min-w-0">
+          <div className={isMessagesPage ? "" : "px-4 py-4"}>
+            {children}
           </div>
-        </div>
+        </main>
+
+        {/* Right Sidebar - progressive: hidden → compact (md) → full (lg) */}
+        {!hideRightSidebar && (
+          <aside className="hidden md:block sticky top-0 h-dvh shrink-0 w-[200px] lg:w-[300px] bg-white">
+            <div className="h-full overflow-y-auto p-3 lg:p-4">
+              <RightSidebar />
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );
@@ -72,7 +52,7 @@ function ShellLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function ShellLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<div>Loading layout...</div>}>
+    <Suspense fallback={<div className="min-h-dvh flex items-center justify-center">Loading...</div>}>
       <ShellLayoutContent>{children}</ShellLayoutContent>
     </Suspense>
   );

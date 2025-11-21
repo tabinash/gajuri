@@ -36,8 +36,8 @@ export default function RootLayout({
     // Mobile redirect logic
     // TODO: When deploying to production, update this to redirect to m.gajuri.com
     const checkMobileAndRedirect = () => {
-      // Check if screen is mobile size (width < 768px)
-      const isMobileScreen = window.innerWidth < 768;
+      // Check if screen is mobile size (width < 640px)
+      const isMobileScreen = window.innerWidth < 640;
 
       if (isMobileScreen && !pathname.startsWith('/m')) {
         // For localhost: redirect to /m path

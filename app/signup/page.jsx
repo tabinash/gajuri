@@ -344,6 +344,192 @@ export default function UnifiedSignupPage() {
         )}
 
         {/* Step 2 and Step 3 remain same */}
+            {/* Step 2: Additional Details */}
+        {currentStep === 2 && (
+          <>
+            <button
+              onClick={() => setCurrentStep(1)}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ChevronLeft size={16} />
+              Back
+            </button>
+
+            <h1 className="text-center text-[22px] font-semibold text-gray-800">
+              A few more details
+            </h1>
+
+            <form onSubmit={handleStep2Submit} className="mt-6 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-800">Account type</label>
+                <div className="flex gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setAccountType("general")}
+                    disabled={loading}
+                    className={`rounded-full px-4 py-2 text-sm border transition ${
+                      accountType === "general"
+                        ? "border-[#1B74E4] bg-[#1B74E4] text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    General
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAccountType("institutional")}
+                    disabled={loading}
+                    className={`rounded-full px-4 py-2 text-sm border transition ${
+                      accountType === "institutional"
+                        ? "border-[#1B74E4] bg-[#1B74E4] text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Institutional
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Date of birth</label>
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  disabled={loading}
+                  className="w-full rounded-[10px] border border-gray-200 bg-white px-3.5 py-2.5 text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-600/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">District</label>
+                  <input
+                    type="text"
+                    value={DISTRICT}
+                    readOnly
+                    className="w-full rounded-[10px] border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[15px] text-gray-900 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Palika</label>
+                  <input
+                    type="text"
+                    value={PALIKA}
+                    readOnly
+                    className="w-full rounded-[10px] border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[15px] text-gray-900 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Ward</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={ward}
+                  onChange={(e) => setWard(e.target.value)}
+                  placeholder="e.g., 10"
+                  disabled={loading}
+                  className="w-full rounded-[10px] border border-gray-200 bg-white px-3.5 py-2.5 text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-600/20"
+                />
+              </div>
+
+              {accountType === "institutional" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Institution category</label>
+                  <select
+                    value={institutionCategory}
+                    onChange={(e) => setInstitutionCategory(e.target.value)}
+                    disabled={loading}
+                    className="w-full rounded-[10px] border border-gray-200 bg-white px-3.5 py-2.5 text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-600/20"
+                  >
+                    <option value="">Select category</option>
+                    <option value="School">School</option>
+                    <option value="College">College</option>
+                    <option value="Hospital">Hospital</option>
+                    <option value="NGO">NGO</option>
+                    <option value="Government">Government</option>
+                    <option value="Business">Business</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              )}
+
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 w-full rounded-full bg-[#1B74E4] px-6 py-3 text-[15px] font-medium text-white transition hover:bg-[#1B74E9] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Sending code..." : "Continue"}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* Step 3: OTP Verification */}
+        {currentStep === 3 && (
+          <>
+            <button
+              onClick={() => setCurrentStep(2)}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ChevronLeft size={16} />
+              Back
+            </button>
+
+            <h1 className="text-center text-[22px] font-semibold text-gray-800">
+              Verify your email
+            </h1>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              We sent a 4-digit OTP to {email || "your email"}.
+            </p>
+
+            <form onSubmit={handleOtpSubmit} className="mt-6 space-y-5">
+              <div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={otp}
+                  onChange={(e) => handleOtpChange(e.target.value)}
+                  placeholder="Enter 4-digit OTP"
+                  className="w-full rounded-[10px] border border-gray-200 bg-white px-4 py-3 text-center text-2xl tracking-widest text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B74E4]/40"
+                />
+              </div>
+
+              {error && (
+                <p className="text-center text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-[#1B74E4] px-6 py-3 text-[15px] font-medium text-white transition hover:bg-[#1B74E9] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Verifying..." : "Verify"}
+              </button>
+            </form>
+
+            <button
+              type="button"
+              onClick={handleResendOtp}
+              disabled={resending}
+              className="mt-4 w-full text-sm text-gray-700 underline hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resending ? "Resending..." : "Resend OTP"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

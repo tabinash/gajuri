@@ -207,7 +207,7 @@ export default function ProfileHeader({ userId }) {
               {profile?.username || "Unknown User"}
             </h1>
             {profile?.verified && (
-              <CheckCircle2 size={20} className="text-green-600" aria-label="Verified" />
+              <CheckCircle2 size={20} className="text-blue-600" aria-label="Verified" />
             )}
             {profile?.institutionalUser && (
               <span className="ml-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">

@@ -16,6 +16,19 @@ import postRepository from "@/repositories/PostRepository";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClickOutside, useCarousel, useCurrentUser } from "@/hooks";
 
+const getPostTypePrefix = (type) => {
+  switch (type) {
+    case "LOST AND FOUND":
+      return { label: "🔍 Lost & Found", style: "text-amber-700" };
+    case "ALERT":
+      return { label: "⚠️ Alert", style: "text-red-600" };
+    case "NOTICE":
+      return { label: "📢 Notice", style: "text-blue-600" };
+    default:
+      return null;
+  }
+};
+
 export default function PostCard({
   id,
   postType,
@@ -38,7 +51,7 @@ export default function PostCard({
   const { userId } = useCurrentUser();
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  console.log("PostCard render:", { id, postType, name });
+  const postTypePrefix = getPostTypePrefix(postType);
 
   const handleDelete = async () => {
     await postRepository.deletePost(postId);
@@ -83,24 +96,6 @@ export default function PostCard({
             </div>
           </Link>
 
-          {postType !== "GENERAL" && (
-  <span
-    className={[
-      "ml-2 rounded-full px-2.5 py-0.5 text-sm font-medium",
-      postType === "LOST AND FOUND"
-        ? "bg-amber-50 text-amber-700 border border-amber-200"
-        : postType === "ALERT"
-        ? "bg-red-50 text-red-700 border border-red-200"
-        : postType === "NOTICE"
-        ? "bg-blue-50 text-blue-700 border border-blue-200"
-        : "",
-    ].join(" ")}
-  >
-    {postType.replaceAll("_", " ")}
-  </span>
-)}
-
-
           {userId === id && (
             <div className="relative" ref={menuRef}>
               <button
@@ -128,18 +123,28 @@ export default function PostCard({
         </header>
 
         {/* Body */}
-        <p className="mt-3 whitespace-pre-wrap text-base leading-normal  text-slate-800">
+        <p
+          className="mt-3 whitespace-pre-wrap text-base leading-normal text-slate-800 cursor-pointer"
+          onClick={onOpen}
+        >
+          {postTypePrefix && (
+            <span className={`font-semibold ${postTypePrefix.style}`}>
+              {postTypePrefix.label}{" "}
+            </span>
+          )}
+          <br />
           {text.length > 200 ? `${text.slice(0, 200)}...` : text}{" "}
           {text.length > 200 && (
-            <span className="text-blue-600 cursor-pointer" onClick={onOpen}>
-              See more
-            </span>
+            <span className="text-blue-600">See more</span>
           )}
         </p>
 
         {/* Carousel */}
         {count > 0 && (
-          <div className="relative mt-3 overflow-hidden rounded-xl cursor-pointer">
+          <div
+            className="relative mt-3 overflow-hidden rounded-xl cursor-pointer"
+            onClick={onOpen}
+          >
             <div
               className="flex transition-transform duration-300 ease-out"
               style={{ transform: `translateX(-${index * 100}%)` }}
@@ -159,7 +164,10 @@ export default function PostCard({
               <>
                 <button
                   type="button"
-                  onClick={prev}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prev();
+                  }}
                   aria-label="Previous image"
                   className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-700 shadow hover:bg-white"
                 >
@@ -167,7 +175,10 @@ export default function PostCard({
                 </button>
                 <button
                   type="button"
-                  onClick={next}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    next();
+                  }}
                   aria-label="Next image"
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-700 shadow hover:bg-white"
                 >
