@@ -60,7 +60,19 @@ export const deleteJob = async (jobId) => {
   }
 };
 
-export const getJobById = async () => {
+export const getJobById = async (jobId) => {
+  try {
+    console.log("🌐 Fetching job from API with ID:", jobId);
+    const response = await httpClient.get(`/jobs/${jobId}`);
+    console.log("🚀 Get Job By ID Response:", response) ; 
+    return response;
+  } catch (error) {
+    console.error(`❌ Error fetching job with ID ${jobId}:`, error);
+    throw error;
+  }
+}
+
+export const getJobByUserId = async () => {
   const userId=  JSON.parse(localStorage.getItem("chemiki-userProfile")).id ;
   try {
     console.log("🌐 Fetching job from API with ID:", userId);
@@ -69,19 +81,6 @@ export const getJobById = async () => {
     return response;
   } catch (error) {
     console.error(`❌ Error fetching job with ID ${userId}:`, error);
-    throw error;
-  }
-}
-
-export const getJobByUserId = async (userId) => {
-  try {
-    console.log("🌐 Fetching jobs from API for user:", userId);
-    const response = await httpClient.get(`/jobs/user/${userId}`);
-    console.log("🚀 My Jobs Response:", response);
-
-    return response;
-  } catch (error) {
-    console.error(`❌ Error fetching jobs for user ${userId}:`, error);
     throw error;
   }
 };

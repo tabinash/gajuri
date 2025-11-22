@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { MapPin, Briefcase, Clock, ArrowRight } from "lucide-react";
-import { getJobById } from "@/repositories/JobRepository";
+import { getJobByUserId } from "@/repositories/JobRepository";
 import { relativeTimeFromISO, formatSalary, normalizeJobType } from "@/utils";
 
 function mapApiToJob(j) {
@@ -147,7 +147,7 @@ export default function JobsPage() {
       try {
         setLoading(true);
         setError(null);
-        const res = await getJobById();
+        const res = await getJobByUserId();
         const rows = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
