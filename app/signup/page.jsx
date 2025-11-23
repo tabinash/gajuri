@@ -446,10 +446,10 @@ export default function UnifiedSignupPage() {
                     className="w-full rounded-[10px] border border-gray-200 bg-white px-3.5 py-2.5 text-[15px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-600/20"
                   >
                     <option value="">Select category</option>
-                    <option value="School">School</option>
+                    <option value="Education">Education</option>
                     <option value="College">College</option>
                     <option value="Hospital">Hospital</option>
-                    <option value="NGO">NGO</option>
+                    <option value="Co-operative">Co-operative</option>
                     <option value="Government">Government</option>
                     <option value="Business">Business</option>
                     <option value="Other">Other</option>

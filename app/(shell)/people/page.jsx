@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, LucideSearch } from "lucide-react";
 import { peopleRepository } from "@/repositories/peopleRepository";
 import Link from "next/link";
 
@@ -56,14 +56,35 @@ export default function PeoplePage() {
   return (
     <div className="mx-auto max-w-3xl">
       {/* Search */}
-      <div className="sticky top-0 z-10 bg-white/95 pb-4 pt-2 backdrop-blur-sm">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name, email, or location…"
-          className="w-full rounded-full border border-slate-300 bg-white px-5 py-3 text-[15px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-        />
-      </div>
+    {/* Search */}
+<div className="sticky top-0 z-10 bg-white/95 pb-4 pt-3 backdrop-blur-sm">
+  <div className="flex items-center gap-2">
+    <div className="relative flex-1">
+      <LucideSearch
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+        size={18}
+      />
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search people by name, email, or location…"
+        className="w-full rounded-full border border-slate-300 bg-white pl-11 pr-4 py-3
+                   text-[15px] shadow-sm focus:outline-none focus:ring-2 
+                   focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+      />
+    </div>
+
+    <button
+      onClick={() => setQ(q)}
+      className="rounded-full bg-blue-600 px-4 py-3 text-sm 
+                 font-semibold text-white shadow-sm hover:bg-blue-700 
+                 transition-colors"
+    >
+      Search
+    </button>
+  </div>
+</div>
+
 
       {/* Simple Shimmer Loading */}
       {loading && (
@@ -169,8 +190,9 @@ export default function PeoplePage() {
                       />
                     )}
                   </div>
-                  <div className="truncate text-sm text-slate-500">{u.email}</div>
-                  {location && (
+{u.institutionCategory?(<div className="truncate text-sm text-slate-500">@{u.institutionCategory}</div>):(
+                    <div> @general_user </div>
+                  )}                  {location && (
                     <div className="truncate text-sm text-slate-500">{location}</div>
                   )}
                 </div>

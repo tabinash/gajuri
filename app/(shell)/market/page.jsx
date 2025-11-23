@@ -9,12 +9,14 @@ import { relativeTimeFromISO, formatPrice, firstImage, cityFromLocation } from "
 // Category options
 const CATEGORIES = [
   "All categories",
+  "AGRICULTURE",
   "ELECTRONIC",
   "VEHICLES",
   "COMPUTER",
   "FURNITURE",
   "FASHION",
   "BEAUTY",
+  "OTHER",
 ];
 
 function mapApiToListing(p) {

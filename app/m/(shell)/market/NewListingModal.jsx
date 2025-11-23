@@ -315,6 +315,7 @@ export default function NewListingModal({ open, onClose }) {
                     disabled={isSubmitting}
                     className="w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-9 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none disabled:opacity-60"
                   >
+                    <option value="AGRICULTURE">Agriculture</option>
                     <option value="ELECTRONIC">Electronics</option>
                     <option value="FURNITURE">Furniture</option>
                     <option value="BEAUTY">Beauty</option>
